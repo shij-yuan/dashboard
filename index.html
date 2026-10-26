@@ -1,0 +1,1500 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>美国经济指标看板</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap"
+    />
+    <link rel="stylesheet" href="hark.css" />
+    <link rel="stylesheet" href="hark-charts.css" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <style>
+      /* Dense monitor layout: tighter rhythm for this page only */
+      .x-dense { gap: 8px; }
+      .x-dense .section { padding-block: 20px 8px; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 80px); }
+      .x-dense .section > * + * { margin-top: 14px; }
+      .x-dense .section > .head + * { margin-top: 0; }
+      .x-dense .head { margin-bottom: 12px; gap: 4px 24px; }
+      .x-dense .head h2 { font: var(--type-heading); }
+      .x-dense .head__sub { font-size: var(--size-small); }
+      .x-dense th, .x-dense td { padding: 7px 10px; }
+      .x-dense th:first-child, .x-dense td:first-child { padding-left: 0; }
+      .x-dense th:last-child, .x-dense td:last-child { padding-right: 0; }
+      .x-dense thead th { padding-top: 0; padding-bottom: 6px; }
+      .x-dense .chart { margin-bottom: 0; padding: 12px 14px 8px; border-radius: var(--r-s); }
+      .x-dense .chart__cap { margin-bottom: 6px; }
+      .x-dense .breakdown .row { padding-block: 8px; }
+
+      .x-titlebar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 24px; align-items: baseline; padding: 16px 0 14px; border-bottom: 1px solid var(--stroke-primary); }
+      .x-titlebar h1 { font: var(--type-title); }
+      .x-titlebar__asof { font: var(--type-tag); color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .x-titlebar__sum { grid-column: 1 / -1; font: var(--type-small); color: var(--text-primary); }
+      .x-titlebar__meta { grid-column: 1 / -1; font: var(--type-caption); color: var(--text-secondary); }
+      @media (max-width: 600px) { .x-titlebar { grid-template-columns: 1fr; } }
+
+      tr.x-group > th { padding-top: 14px; font: var(--type-tag); color: var(--text-secondary); border-bottom-color: var(--stroke-primary); }
+      /* Semantic status colors: fill for dots/bars/lines, ink for text (AA contrast) */
+      :root {
+        --x-red: light-dark(#d64545, #ef5b5b);
+        --x-red-ink: light-dark(#b93434, #ff8f8f);
+        --x-amber: light-dark(#e0a100, #f0b429);
+        --x-amber-ink: light-dark(#8a6200, #f5c95a);
+        --x-green: light-dark(#2e9e5b, #3dbe72);
+        --x-green-ink: light-dark(#1f7a45, #6bd696);
+        --x-slate: light-dark(#64748b, #94a3b8);
+        --x-slate-ink: light-dark(#475569, #b4bfcd);
+        --x-blue: light-dark(#2f6fd0, #6e9ff0);
+        --x-blue-ink: light-dark(#2459ad, #8fb5f5);
+      }
+      .x-r { --c: var(--x-red); --ci: var(--x-red-ink); }
+      .x-a { --c: var(--x-amber); --ci: var(--x-amber-ink); }
+      .x-g { --c: var(--x-green); --ci: var(--x-green-ink); }
+      .x-n { --c: var(--x-slate); --ci: var(--x-slate-ink); }
+      .x-b { --c: var(--x-blue); --ci: var(--x-blue-ink); }
+
+      .x-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); vertical-align: 0.1em; margin-right: 9px; }
+      .x-arr { font-size: var(--size-caption); color: var(--ci); }
+      td.x-chg { color: var(--ci); }
+      .x-chip { display: inline-flex; align-items: center; gap: 4px; justify-self: start; padding: 2px 8px; border-radius: var(--r-pill); font: var(--type-caption); font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; color: var(--ci); background: color-mix(in srgb, var(--c) 15%, transparent); white-space: nowrap; }
+
+      /* Section markers */
+      .x-dense .section > .head { border-left: 3px solid var(--x-blue); padding-left: 12px; }
+      .x-dense .head__eyebrow { color: var(--x-blue-ink); font-weight: var(--weight-medium); }
+
+      /* Headline tiles + 重点观察 cards */
+      .x-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr)); gap: 8px; padding-top: 6px; }
+      .x-focus { grid-template-columns: repeat(auto-fill, minmax(min(100%, 228px), 1fr)); gap: 10px; padding-top: 0; }
+      .x-tile { display: grid; align-content: start; gap: 4px; padding: 10px 12px 12px; border-radius: var(--r-s); border-left: 3px solid var(--c); background: color-mix(in srgb, var(--c) 9%, var(--fill-primary-on)); }
+      .x-tile__label { display: flex; flex-wrap: wrap; align-items: center; font: var(--type-tag); color: var(--text-secondary); }
+      .x-tile__label .x-tip { flex-basis: 100%; }
+      .x-tile__st { font: var(--type-caption); color: var(--text-secondary); }
+      .x-tile__st [data-lbl] { color: var(--ci); font-weight: var(--weight-bold); }
+      .x-tile__label .x-dot { width: 7px; height: 7px; margin-right: 6px; box-shadow: none; }
+      .x-tile__fig { font: var(--type-figure); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; color: var(--text-primary); line-height: 1.1; }
+
+      /* Severity cards */
+      .cards > div.x-sev { border-left: 4px solid var(--c); background: color-mix(in srgb, var(--c) 8%, var(--fill-tertiary)); }
+      .x-sev .quote { font: var(--type-figure); font-weight: var(--weight-bold); color: var(--ci); font-variant-numeric: tabular-nums; }
+      .x-sev .quote .pill { vertical-align: middle; }
+      .x-sev h3 { display: flex; align-items: center; }
+
+      /* Crisis warning */
+      .x-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 14px; border-radius: var(--r-s); background: var(--fill-tertiary); font: var(--type-label); font-variant-numeric: tabular-nums; }
+      .x-strip .x-chip { font: var(--type-label); font-weight: var(--weight-bold); padding: 4px 12px; }
+      .x-strip .x-chip .x-dot { margin-right: 2px; box-shadow: none; }
+      .x-strip__rule { margin-left: auto; color: var(--text-secondary); font: var(--type-small); }
+      .x-reading { padding: 12px 14px; border-left: 3px solid var(--x-red); background: color-mix(in srgb, var(--x-red) 7%, var(--fill-primary-on)); border-radius: 0 var(--r-s) var(--r-s) 0; font: var(--type-body); }
+      /* Layers stack full width; lights inside each layer flow in an auto-fill grid */
+      .x-layers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+      .x-layers .x-ind { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); column-gap: 20px; align-items: start; }
+      /* Grey tag: analysis text written for an older snapshot */
+      .x-sum li > .x-dot { margin: 0 2px 0 4px; }
+      .x-atag { margin-top: 6px; }
+      .x-atag[hidden] { display: none; }
+      .x-atag .x-chip { font-weight: var(--weight-regular); }
+      /* A section head whose content is one fold toggles that fold */
+      .x-foldhead { cursor: pointer; }
+      .x-layer { padding: 14px 16px 6px; border-radius: var(--r-m); background: var(--fill-tertiary); border-top: 3px solid var(--c); }
+      .x-layer__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; }
+      .x-layer__head h3 { font: var(--type-heading); }
+      .x-layer__desc { margin-top: 2px; font: var(--type-small); color: var(--text-secondary); }
+      .x-ind { list-style: none; margin: 10px 0 0; padding: 0; }
+      /* Compact light rows: tap a row (or ⓘ) to show its explanation and rule */
+      /* Two rows: dot + full name (+ ⓘ) on row 1, the value on row 2; never squeezes the name */
+      .x-ind li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 8px; padding: 6px 0; border-top: 1px solid var(--stroke-secondary); align-items: center; cursor: pointer; }
+      .x-ind .x-dot { margin-right: 0; grid-row: 1; grid-column: 1; }
+      .x-ind__name { grid-row: 1; grid-column: 2; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: var(--type-small); font-weight: var(--weight-medium); }
+      .x-ind .x-info { grid-row: 1; grid-column: 3; }
+      .x-ind__val { grid-row: 2; grid-column: 2 / -1; min-width: 0; max-width: none; text-align: left; word-break: normal; overflow-wrap: anywhere; font: var(--type-small); font-weight: var(--weight-bold); color: var(--ci); font-variant-numeric: tabular-nums; }
+      .x-ind__rule { display: none; grid-column: 2 / -1; font: var(--type-caption); color: var(--text-secondary); }
+      .x-ind li.is-open .x-note, .x-ind li.is-open .x-ind__rule { display: block; }
+      .x-ind__meta { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font: var(--type-caption); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+      .x-ind__meta:empty { display: none; }
+      .x-chip.x-near { --c: var(--x-amber); --ci: var(--x-amber-ink); background: none; box-shadow: inset 0 0 0 1px var(--c); padding: 0 7px; }
+      .x-near-d { color: var(--x-amber-ink); font-weight: var(--weight-medium); }
+      .x-bt { color: var(--text-secondary); }
+      .x-chip.x-bt-un { padding: 0 7px; cursor: help; }
+      .x-bt-why { display: none; flex-basis: 100%; color: var(--text-secondary); }
+      .x-ind li.is-open .x-bt-why { display: block; }
+      @media (max-width: 420px) { .x-ind li:not(.is-open) .x-bt { display: none; } }
+      .x-stale { margin: 0 0 12px; padding: 10px 14px; border-radius: var(--r-s); border: 1px solid var(--x-amber); background: color-mix(in srgb, var(--x-amber) 18%, var(--fill-primary-on)); color: var(--text-primary); font: var(--type-small); font-weight: var(--weight-medium); }
+      .x-std { color: var(--x-blue-ink); font-weight: var(--weight-medium); white-space: nowrap; }
+
+      .x-points { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); border-top: 1px solid var(--stroke-secondary); }
+      .x-points li { padding: 10px 14px 10px 0; border-bottom: 1px solid var(--stroke-secondary); font: var(--type-small); }
+      .x-points b { display: block; font: var(--type-tag); color: var(--text-secondary); margin-bottom: 2px; }
+
+      .x-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; align-items: stretch; }
+      .x-grid > .breakdown { padding: 4px 0; }
+      .x-spark { position: relative; height: 150px; }
+
+      /* Plain-language notes: what it is / why it matters */
+      .x-note { display: block; margin-top: 2px; font: var(--type-caption); color: var(--text-secondary); text-wrap: pretty; }
+      .x-tile .x-note { margin-top: 0; }
+      .x-sev h3 + .x-note { margin: -6px 0 10px; }
+      .x-ind .x-note { display: none; grid-column: 2 / -1; margin-top: 0; }
+      .x-layer__desc .x-note { margin-top: 0; }
+      .breakdown dt .x-note { margin-top: 2px; }
+
+      /* ⓘ toggle for the dense overview table; opens on tap or click */
+      .x-info { position: relative; display: inline-grid; place-items: center; width: 24px; height: 24px; margin: -4px 0 -4px 2px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--text-secondary); font: var(--weight-medium) var(--size-meta)/1 var(--sans); cursor: pointer; vertical-align: middle; }
+      .x-info::after { content: ""; position: absolute; inset: -10px; }
+      .x-info:hover, .x-info[aria-expanded="true"] { color: var(--text-primary); background: var(--fill-tertiary); }
+      .x-tip { display: none; max-width: 32ch; margin-top: 4px; padding: 6px 10px; border-radius: var(--r-s); background: var(--fill-tertiary); font: var(--type-caption); font-weight: var(--weight-regular); color: var(--text-primary); white-space: normal; }
+      .x-info[aria-expanded="true"] + .x-tip { display: block; }
+
+      /* 今日总结 card */
+      .x-sum { padding: 16px 18px; border-radius: var(--r-m); border: 1px solid var(--stroke-secondary); border-left: 4px solid var(--x-amber); background: color-mix(in srgb, var(--x-amber) 7%, var(--fill-tertiary)); }
+      .x-sum__head { display: flex; align-items: center; gap: 8px; font: var(--type-label); color: var(--text-secondary); margin-bottom: 6px; }
+      .x-sum ul { list-style: none; margin: 0; padding: 0; }
+      .x-sum li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--stroke-secondary); font: var(--type-body); }
+      .x-sum li:first-child { border-top: 0; }
+      .x-sum li > .x-chip { padding: 2px 6px; }
+      .x-sum li strong { font-weight: var(--weight-bold); }
+      .x-v { font-weight: var(--weight-bold); color: var(--ci); font-variant-numeric: tabular-nums; white-space: nowrap; }
+      /* Classes allowed in DASH.analysis summary html */
+      .x-sum .red, .x-sum .amber, .x-sum .green { font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+      .x-sum .red { color: var(--x-red-ink); }
+      .x-sum .amber { color: var(--x-amber-ink); }
+      .x-sum .green { color: var(--x-green-ink); }
+      .x-sum .fineprint { margin-top: 8px; }
+
+      /* 扩展指标: collapsible group cards */
+      .x-folds { display: grid; gap: 8px; }
+      .x-fold { border-radius: var(--r-m); background: var(--fill-tertiary); }
+      .x-fold > summary { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-height: var(--tap); padding: 12px 48px 12px 16px; cursor: pointer; list-style: none; font: var(--type-label); font-weight: var(--weight-bold); border-radius: var(--r-m); }
+      .x-fold > summary::-webkit-details-marker { display: none; }
+      .x-fold > summary::after { content: ""; position: absolute; right: 20px; top: 50%; width: 8px; height: 8px; border-right: 1.5px solid var(--text-secondary); border-bottom: 1.5px solid var(--text-secondary); transform: translateY(-70%) rotate(45deg); transition: transform var(--dur-quick) var(--ease-out); }
+      .x-fold[open] > summary::after { transform: translateY(-25%) rotate(-135deg); }
+      .x-fold > summary:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+      .x-fold__num { color: var(--text-secondary); font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; }
+      .x-fold__src { font: var(--type-caption); color: var(--text-secondary); }
+      .x-fold__body { padding: 0 16px 10px; }
+      .x-fold .table-wrap { margin: 0; }
+
+      /* 10-year percentile: neutral grey bar (0–100) with a marker, under the value */
+      .x-pctl { display: flex; align-items: center; gap: 6px; margin-top: 3px; font: var(--type-caption); font-weight: var(--weight-regular); color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .x-pctl__bar { position: relative; flex: none; width: 56px; height: 4px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--text-secondary) 20%, transparent); }
+      .x-pctl__bar b { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: color-mix(in srgb, var(--text-secondary) 50%, transparent); }
+      .x-pctl__bar i { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; border-radius: 1px; background: var(--text-primary); }
+      @media (max-width: 599px) { .table-wrap tbody td[data-label] > .x-pctl { grid-column: 1 / -1; margin-top: 0; } }
+      /* Freshness chip from fred.*.fresh */
+      .x-fresh { margin-left: 6px; vertical-align: middle; }
+
+      /* Mobile */
+      @media (max-width: 420px) {
+        .x-fold > summary { padding-left: 14px; }
+        .x-fold__body { padding: 0 14px 10px; }
+        .x-fold__src { font-size: var(--size-meta); }
+        html, body { overflow-x: clip; }
+        .x-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .x-tile { padding: 10px; }
+        .x-tile__fig { font-size: 22px; }
+        .x-tile__label { align-items: flex-start; }
+        .x-tile__label .x-dot { margin-top: 0.45em; }
+        .x-layers, .x-layers .x-ind, .x-grid, .x-points { grid-template-columns: minmax(0, 1fr); }
+        .x-layer { padding: 14px 14px 6px; }
+        .x-focus { grid-template-columns: minmax(0, 1fr); }
+        .x-spark { height: 190px; }
+        .x-sum { padding: 14px; }
+        .x-strip__rule { margin-left: 0; flex-basis: 100%; }
+        .x-note, .x-tip, .x-tile__label, .x-chip, .x-ind__rule, .x-titlebar__asof, .x-titlebar__meta, .x-points b,
+        .x-dense .chart__cap, .x-dense .fineprint, .x-dense small,
+        .x-dense .table-wrap tbody td[data-label]::before { font-size: var(--size-meta); }
+        .x-info { width: var(--tap); height: var(--tap); margin: -12px -10px -12px -6px; font-size: var(--size-body); }
+        .x-info::after { content: none; }
+        .x-dense .table-wrap tbody tr.x-group > th { padding-top: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page" id="top">
+      <header class="nav glass" data-auto></header>
+      <main class="main x-dense">
+        <p class="x-stale" id="x-stale" role="status" hidden></p>
+        <div class="x-titlebar">
+          <h1>美国经济指标看板</h1>
+          <p class="x-titlebar__asof">数据快照 · 截至 <span data-k="asof_sgt" data-fmt="date">2026-10-26</span></p>
+          <p class="x-titlebar__sum" id="x-tsum">—</p>
+          <p class="x-titlebar__meta">各项为最新可得观测值，日期逐项标注 · 来源 FRED、纽约联储 · 每个美股交易日次日新加坡时间 9 点自动更新；数值以官方发布为准</p>
+        </div>
+
+        <section class="section" id="today" data-nav="今日">
+          <div class="head">
+            <p class="head__eyebrow"><span data-k="asof_sgt" data-fmt="date">2026-10-26</span></p>
+            <h2>今日总结</h2>
+            <p class="x-atag" data-atag hidden><span class="x-chip x-n"></span></p>
+          </div>
+          <div class="x-sum" role="group" aria-label="今日总结">
+            <p class="x-sum__head"><span class="hark-mark" data-size="16"></span> 一句话看今天</p>
+            <ul id="x-sum-list"></ul>
+            <p class="fineprint" id="x-upcoming" hidden></p>
+            <p class="fineprint" id="x-errnote" hidden>部分数据沿用上次值</p>
+          </div>
+        </section>
+
+        <section class="section" id="warning" data-nav="预警">
+          <div class="head">
+            <p class="head__eyebrow">三层预警 · <span data-ccount>—</span> 项指标 · 点行查看说明</p>
+            <h2>危机预警（截至 <span data-cdate>—</span>）</h2>
+            <p class="head__sub">结构层 = 市场脆弱度；周期层 = 6–18个月领先信号；确认层 = 信用与金融条件是否确认。</p>
+          </div>
+          <div class="x-strip" role="group" aria-label="信号汇总">
+            <span class="x-chip x-r"><i class="x-dot"></i><span data-cc="红">–</span> 红</span>
+            <span class="x-chip x-a"><i class="x-dot"></i><span data-cc="黄">–</span> 黄</span>
+            <span class="x-chip x-g"><i class="x-dot"></i><span data-cc="绿">–</span> 绿</span>
+            <span class="x-chip x-n" data-reso>三层共振：否</span>
+            <span class="x-strip__rule">规则：只有多层同时亮灯才值得行动。</span>
+          </div>
+          <p class="x-reading" id="x-crisis-note"></p>
+          <div class="x-layers">
+            <div class="x-layer x-g">
+              <div class="x-layer__head"><h3>结构层</h3><span class="x-chip x-n">–</span></div>
+              <p class="x-layer__desc">市场脆弱度<span class="x-note">市场本身有多脆弱，决定冲击会否被放大</span></p>
+              <ul class="x-ind">
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="SP500_vs_200DMA">标普500 相对200日均线</span><span class="x-ind__val">+6.49%</span><span class="x-note">长期趋势线，跌破常被视为转熊信号</span><span class="x-ind__rule">低于均线5%以上=红，−5%至+3%=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="VIX/VXV">VIX/VIX3M</span><span class="x-ind__val">0.891</span><span class="x-note">近月恐慌高于远月(&gt;1)说明市场急性紧张</span><span class="x-ind__rule">&gt;1.0=红，0.95–1.0=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="THREEFYTP10">10年期限溢价 (ACM)</span><span class="x-ind__val">0.99%</span><span class="x-note">投资者持有长债要求的额外补偿</span><span class="x-ind__rule">&gt;1.0% 或3个月升&gt;50bp=黄</span></li>
+                <li class="x-a"><i class="x-dot" role="img" aria-label="黄"></i><span class="x-ind__name" data-cid="VALUATION_LEVERAGE">估值+杠杆</span><span class="x-ind__val">—</span><span class="x-note">高估值叠加创纪录杠杆，一旦回撤易引发去杠杆</span><span class="x-ind__rule"></span></li>
+                <li class="x-a"><i class="x-dot" role="img" aria-label="黄"></i><span class="x-ind__name" data-cid="MOVE">MOVE 美债波动率</span><span class="x-ind__val">—</span><span class="x-note">美债期权隐含波动率，&gt;100 债市波动偏高，&gt;120 压力</span><span class="x-ind__rule"></span></li>
+              </ul>
+            </div>
+            <div class="x-layer x-r">
+              <div class="x-layer__head"><h3>周期层</h3><span class="x-chip x-n">–</span></div>
+              <p class="x-layer__desc">6–18个月领先信号<span class="x-note">经济周期的领先指标，提前数月预警</span></p>
+              <ul class="x-ind">
+                <li class="x-r"><i class="x-dot" role="img" aria-label="红"></i><span class="x-ind__name" data-cid="WTI_10Y">油价＋利率</span><span class="x-ind__val">WTI $107.89（同比 +73%）· 10Y 5.13%</span><span class="x-note">高油价叠加高利率，双重挤压增长</span><span class="x-ind__rule">油价&gt;$100或10Y&gt;5%=黄；两者同时且WTI同比&gt;+50%=红</span></li>
+                <li class="x-a"><i class="x-dot" role="img" aria-label="黄"></i><span class="x-ind__name" data-cid="T10Y3M">10Y−3M 利差</span><span class="x-ind__val">0.74%</span><span class="x-note">长短端利差，倒挂(&lt;0)历来领先衰退 6–18 个月</span><span class="x-ind__rule">&lt;0=红；2025-09 倒挂解除后24个月内=黄</span></li>
+                <li class="x-a"><i class="x-dot" role="img" aria-label="黄"></i><span class="x-ind__name" data-cid="T10Y2Y">10Y−2Y 利差</span><span class="x-ind__val">0.31%</span><span class="x-note">另一常用曲线利差，倒挂常被视为衰退前兆</span><span class="x-ind__rule">&lt;0=红，0–0.5%=黄</span></li>
+                <li class="x-a"><i class="x-dot" role="img" aria-label="黄"></i><span class="x-ind__name" data-cid="PERMIT_yoy%">建筑许可同比</span><span class="x-ind__val">−3.05%</span><span class="x-note">未来开工的先行指标，楼市往往最先转向</span><span class="x-ind__rule">&lt;−15%=红，&lt;−5%=黄</span></li>
+                <li class="x-a"><i class="x-dot" role="img" aria-label="黄"></i><span class="x-ind__name" data-cid="JTSQUR_yoy_pp">主动离职率同比</span><span class="x-ind__val">−0.1pp</span><span class="x-note">员工主动辞职比例，下降=对找新工作没信心</span><span class="x-ind__rule">降≥0.2pp=红，下降=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="NFP_3mavg_k">非农3个月均值</span><span class="x-ind__val">+5.07万</span><span class="x-note">平滑后的每月新增就业，看就业趋势</span><span class="x-ind__rule">&lt;0=红，&lt;5万=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="TEMPHELPS_yoy%">临时工就业同比</span><span class="x-ind__val">+0.61%</span><span class="x-note">企业最先削减临时工，领先整体就业</span><span class="x-ind__rule">&lt;−3%=红，&lt;0=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="JTSJOL_yoy%">JOLTS 职位空缺同比</span><span class="x-ind__val">+2.31%</span><span class="x-note">企业招聘需求，减少说明用工降温</span><span class="x-ind__rule">&lt;−10%=红，&lt;0=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="AWHMAN">制造业周工时</span><span class="x-ind__val">42.0 小时</span><span class="x-note">企业裁员前通常先缩短工时</span><span class="x-ind__rule">&lt;41.0=红，&lt;41.5=黄</span></li>
+                <li class="x-a"><i class="x-dot" role="img" aria-label="黄"></i><span class="x-ind__name" data-cid="INFLATION_PIPE">通胀管道</span><span class="x-ind__val">—</span><span class="x-note">上游PPI与通胀预期同时走高，若核心CPI跟上则通胀再起</span><span class="x-ind__rule"></span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="HOUSEHOLD_STRESS">居民压力</span><span class="x-ind__val">—</span><span class="x-note">储蓄垫薄、信心低迷，若小银行信用卡拖欠上升说明中低收入家庭承压</span><span class="x-ind__rule"></span></li>
+              </ul>
+            </div>
+            <div class="x-layer x-g">
+              <div class="x-layer__head"><h3>确认层</h3><span class="x-chip x-n">–</span></div>
+              <p class="x-layer__desc">信用与金融条件是否确认<span class="x-note">信用与金融条件恶化，才确认衰退真正到来</span></p>
+              <ul class="x-ind">
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="EBP">超额债券溢价 EBP</span><span class="x-ind__val">−0.39（2026-09）</span><span class="x-note">剔除违约风险后的信用溢价，反映投资者恐慌程度</span><span class="x-ind__rule">&gt;0.5=红，&gt;0=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="BAMLH0A0HYM2_vs_12mLow_bp">高收益利差较12个月低点</span><span class="x-ind__val">+67bp</span><span class="x-note">垃圾债利差从低点走阔的幅度，衡量信用恶化</span><span class="x-ind__rule">+150bp=红，+100bp=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="BAMLC0A0CM_vs_12mLow_bp">投资级利差较12个月低点</span><span class="x-ind__val">+15bp</span><span class="x-note">优质公司债利差走阔幅度，看企业融资压力</span><span class="x-ind__rule">+75bp=红，+50bp=黄</span></li>
+                <li class="x-r"><i class="x-dot" role="img" aria-label="红"></i><span class="x-ind__name" data-cid="BAMLH0A3HYC_vs_12mLow_bp">CCC 利差</span><span class="x-ind__val">—</span><span class="x-note">最低评级垃圾债利差，最先反映违约风险上升</span><span class="x-ind__rule"></span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="DRTSCILM">银行收紧工商贷款比例 SLOOS</span><span class="x-ind__val">0.0</span><span class="x-note">收紧放贷标准的银行占比，信贷收缩先兆</span><span class="x-ind__rule">&gt;30=红，&gt;10=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="STLFSI4">圣路易斯金融压力指数</span><span class="x-ind__val">−0.63</span><span class="x-note">综合多个市场的压力，&gt;0 表示高于常态</span><span class="x-ind__rule">&gt;1=红，&gt;0=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="NFCI">芝加哥金融条件指数 NFCI</span><span class="x-ind__val">−0.50</span><span class="x-note">金融条件松紧，数值越高融资越难</span><span class="x-ind__rule">&gt;0=红，&gt;−0.3=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="SAHMREALTIME">萨姆规则（实时）</span><span class="x-ind__val">0.00</span><span class="x-note">失业率3月均值较前12月低点升≥0.5pp 即衰退信号</span><span class="x-ind__rule">≥0.5=红，≥0.3=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="ICSA_4wk_vs_52wLow%">初请4周均值较52周低点</span><span class="x-ind__val">+0%</span><span class="x-note">首次申领失业金上升，是裁员加速的早期信号</span><span class="x-ind__rule">+20%=红，+10%=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="CCSA_yoy%">续请失业金同比</span><span class="x-ind__val">−11.3%</span><span class="x-note">持续领失业金人数，上升=再就业变难</span><span class="x-ind__rule">&gt;+10%=红，&gt;+5%=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="DRCCLACBS_yoy_pp">信用卡拖欠率同比</span><span class="x-ind__val">−0.19pp</span><span class="x-note">家庭财务压力的直接体现</span><span class="x-ind__rule">升&gt;0.3pp=红，上升=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="DRCLACBS_yoy_pp">消费贷拖欠率同比</span><span class="x-ind__val">−0.13pp</span><span class="x-note">居民偿债能力变化，上升说明消费承压</span><span class="x-ind__rule">升&gt;0.3pp=红，上升=黄</span></li>
+                <li class="x-g"><i class="x-dot" role="img" aria-label="绿"></i><span class="x-ind__name" data-cid="RECPROUSM156N">衰退概率（平滑模型）</span><span class="x-ind__val">0.62%</span><span class="x-note">用就业、产出等数据估算的当前衰退可能</span><span class="x-ind__rule">&gt;20%=红，&gt;10%=黄</span></li>
+              </ul>
+            </div>
+          </div>
+          <p class="fineprint">数据来源 FRED、美联储；每个美股交易日次日新加坡时间 9 点更新。</p>
+        </section>
+
+        <section class="section" id="watch">
+          <div class="head"><h2>最值得关注</h2></div>
+          <div class="cards" id="x-watch"></div>
+        </section>
+
+        <section class="section" id="focus" data-nav="重点">
+          <div class="head">
+            <p class="head__eyebrow">劳动力 · 资金面 · 美债需求 · 尾部风险</p>
+            <h2>重点观察</h2>
+            <p class="head__sub">最先反映就业、流动性与避险需求拐点的几项。红 = 不利，黄 = 需留意，绿 = 有利，灰 = 中性。</p>
+          </div>
+          <div class="x-tiles x-focus">
+            <div class="x-tile x-g" data-xs="VU" data-pct="other.derived.v_u"><span class="x-tile__label"><i class="x-dot"></i>职位空缺/失业比 · <span data-k="other.derived.v_u.date" data-fmt="ym">2026-08</span><button class="x-info" type="button" aria-expanded="false" aria-label="职位空缺/失业比 说明" title="每个失业者对应的职位空缺数，&lt;0.7 劳动力市场明显转弱">ⓘ</button><span class="x-tip" role="note">每个失业者对应的职位空缺数，&lt;0.7 劳动力市场明显转弱</span></span><span class="x-tile__fig" data-k="other.derived.v_u.value" data-fmt="num2">1.01</span><span class="x-note">前值 <span data-k="other.derived.v_u.prev" data-fmt="num2">1.06</span> · 一年前 <span data-k="other.derived.v_u.yago" data-fmt="num2">0.97</span></span><span class="x-tile__st"><span data-lbl>有利</span> · &lt;1.0 留意 · &lt;0.7 不利</span></div>
+            <div class="x-tile x-n" data-xs="RRP" data-pct="RRPONTSYD"><span class="x-tile__label"><i class="x-dot"></i>资金面 · 逆回购 ON RRP · <span data-k="fred.RRPONTSYD.date" data-fmt="md">10/23</span><button class="x-info" type="button" aria-expanded="false" aria-label="逆回购 说明" title="货币基金存放联储的闲钱，接近零说明流动性缓冲已耗尽">ⓘ</button><span class="x-tip" role="note">货币基金存放联储的闲钱，接近零说明流动性缓冲已耗尽</span></span><span class="x-tile__fig">$<span data-k="fred.RRPONTSYD.value" data-fmt="num2">0.20</span>B</span><span class="x-note">较 <span data-k="fred.RRPONTSYD.prev_date" data-fmt="md">10/05</span> $<span data-k="fred.RRPONTSYD.prev" data-fmt="num2">1.00</span>B，<span data-k="fred.RRPONTSYD.chg_pct" data-fmt="pctchg">−80.08%</span></span><span class="x-tile__st"><span data-lbl>缓冲已耗尽</span> · 中性 · 2025-08 起长期接近 0，缓冲已耗尽，仅作状态参考 · <span class="x-std">本页自定标准</span></span></div>
+            <div class="x-tile x-a" data-xs="RESV" data-pct="WRESBAL"><span class="x-tile__label"><i class="x-dot"></i>资金面 · 银行准备金 · <span data-k="fred.WRESBAL.date" data-fmt="md">10/21</span><button class="x-info" type="button" aria-expanded="false" aria-label="银行准备金 说明" title="银行存在联储的现金，过低会引发资金紧张">ⓘ</button><span class="x-tip" role="note">银行存在联储的现金，过低会引发资金紧张</span></span><span class="x-tile__fig">$<span data-k="fred.WRESBAL.value" data-fmt="tn">2.96万亿</span></span><span class="x-note">较 <span data-k="fred.WRESBAL.prev_date" data-fmt="md">7/22</span> $<span data-k="fred.WRESBAL.prev" data-fmt="tn">3.06万亿</span>，<span data-k="fred.WRESBAL.chg_pct" data-fmt="pctchg">−3.25%</span> · 占GDP <span data-k="other.derived.reserves_gdp.value_pct" data-fmt="num1">9.1</span>%（2019-09 回购危机时 6.6%）</span><span class="x-tile__st"><span data-lbl>留意</span> · 准备金/GDP &lt;9.5% 留意 · &lt;8% 不利 · <span class="x-std">本页自定标准</span></span></div>
+            <div class="x-tile x-g" data-xs="TGA" data-pct="WTREGEN"><span class="x-tile__label"><i class="x-dot"></i>资金面 · TGA 财政部账户 · <span data-k="fred.WTREGEN.date" data-fmt="md">10/21</span><button class="x-info" type="button" aria-expanded="false" aria-label="TGA 说明" title="财政部在联储的现金，升高会抽走市场流动性">ⓘ</button><span class="x-tip" role="note">财政部在联储的现金，升高会抽走市场流动性</span></span><span class="x-tile__fig">$<span data-k="fred.WTREGEN.value" data-fmt="tn">0.95万亿</span></span><span class="x-note">较 <span data-k="fred.WTREGEN.prev_date" data-fmt="md">7/22</span> $<span data-k="fred.WTREGEN.prev" data-fmt="tn">0.83万亿</span>，<span data-k="fred.WTREGEN.chg_pct" data-fmt="pctchg">+14.75%</span> · 4周变化 $<span data-k="other.derived.tga_4w.chg_b" data-fmt="snum1">−25.1</span>B（4周）</span><span class="x-tile__st"><span data-lbl>有利</span> · 4周增 &gt;$200B 且准备金/GDP&lt;9.5% 留意 · <span class="x-std">本页自定标准</span></span></div>
+            <div class="x-tile x-g" data-xs="SOFRIORB" data-pct="-"><span class="x-tile__label"><i class="x-dot"></i>资金面 · SOFR−IORB<button class="x-info" type="button" aria-expanded="false" aria-label="SOFR−IORB 说明" title="回购利率 SOFR 高于准备金利率 IORB，说明回购资金偏紧">ⓘ</button><span class="x-tip" role="note">回购利率 SOFR 高于准备金利率 IORB，说明回购资金偏紧</span></span><span class="x-tile__fig" data-k="other.derived.sofr_minus_iorb.value_bp" data-fmt="bp">0bp</span><span class="x-note">SOFR <span data-k="fred.SOFR.value" data-fmt="pct2">3.88%</span>（<span data-k="fred.SOFR.date" data-fmt="md">10/21</span>）· 利差日期 <span data-k="other.derived.sofr_minus_iorb.date" data-fmt="iso">2026-10-22</span> · 5日均 <span data-k="other.derived.sofr_minus_iorb.avg5_bp" data-fmt="bp">−1bp</span></span><span class="x-tile__st"><span data-lbl>有利</span> · 5日均 &gt;5bp 留意 · &gt;15bp 不利（单日月末波动不计） · <span class="x-std">本页自定标准</span></span></div>
+            <div class="x-tile x-g" data-xs="AUCL" data-pct="-"><span class="x-tile__label"><i class="x-dot"></i>美债拍卖投标倍数 · <span data-k="other.auction_latest.tenor">30Y</span><button class="x-info" type="button" aria-expanded="false" aria-label="投标倍数 说明" title="倍数越低说明需求越弱；取最近一次拍卖">ⓘ</button><span class="x-tip" role="note">倍数越低说明需求越弱；取最近一次拍卖</span></span><span class="x-tile__fig" data-k="other.auction_latest.btc" data-fmt="ratio2">2.54</span><span class="x-note">近6次均 <span data-k="other.auction_latest.avg6" data-fmt="num2">2.48</span> · 较均值 <span data-k="other.auction_latest.vs_avg6" data-fmt="snum2">+0.06</span> · <span data-k="other.auction_latest.date" data-fmt="iso">2026-10-08</span></span><span class="x-tile__st"><span data-lbl>有利</span> · 较近6次均 ≤−0.15 留意 · ≤−0.30 不利</span></div>
+            <div class="x-tile x-a" data-xs="VVIX" data-pct="-"><span class="x-tile__label"><i class="x-dot"></i>VVIX · VIX 的波动率<button class="x-info" type="button" aria-expanded="false" aria-label="VVIX 说明" title="衡量市场对“恐慌指数本身会大幅波动”的担忧">ⓘ</button><span class="x-tip" role="note">衡量市场对“恐慌指数本身会大幅波动”的担忧</span></span><span class="x-tile__fig" data-k="other.cboe.VVIX.value" data-fmt="num2">109.70</span><span class="x-note">3周前 <span data-k="other.cboe.VVIX.prev_3w" data-fmt="num2">85.46</span> · <span data-k="other.cboe.VVIX.date" data-fmt="iso">2026-10-23</span></span><span class="x-tile__st"><span data-lbl>留意</span> · &gt;110 留意 · &gt;125 不利</span></div>
+            <div class="x-tile x-a" data-xs="SKEW" data-pct="-"><span class="x-tile__label"><i class="x-dot"></i>SKEW 尾部风险指数<button class="x-info" type="button" aria-expanded="false" aria-label="SKEW 说明" title="越高表示投资者越愿意花钱防暴跌">ⓘ</button><span class="x-tip" role="note">越高表示投资者越愿意花钱防暴跌</span></span><span class="x-tile__fig" data-k="other.cboe.SKEW.value" data-fmt="num2">151.80</span><span class="x-note">3周前 <span data-k="other.cboe.SKEW.prev_3w" data-fmt="num2">143.04</span> · <span data-k="other.cboe.SKEW.date" data-fmt="iso">2026-10-23</span></span><span class="x-tile__st"><span data-lbl>留意</span> · &gt;155 留意 · &gt;165 不利</span></div>
+          </div>
+          <p class="fineprint">资金面阈值（逆回购、准备金、TGA、SOFR−IORB）为本页观察口径；“—”表示今日无数据。</p>
+        </section>
+
+        <section class="section" id="overview" data-nav="总览">
+          <div class="head">
+            <h2>关键指标总览</h2>
+            <p class="head__sub">颜色表示对经济与市场的影响：红 = 不利，黄 = 需留意，绿 = 有利，灰 = 中性。数值下的灰色条为历史分位（按实际数据年数，最长10年），附标准差（σ）。</p>
+          </div>
+          <details class="x-fold x-sec">
+            <summary>展开头条卡片与总览表<span class="x-fold__src">市场 · 利率 · 实体经济 · 信贷与流动性</span></summary>
+            <div class="x-fold__body">
+          <div class="x-tiles" aria-label="头条指标">
+          <div class="x-tile x-r" data-st="DCOILWTICO"><span class="x-tile__label"><i class="x-dot"></i>WTI 原油 · <span data-k="fred.DCOILWTICO.date" data-fmt="md">10/20</span></span><span class="x-note">美国基准油价，推高通胀、挤压消费</span><span class="x-tile__fig">$<span data-k="fred.DCOILWTICO.value" data-fmt="num2">107.89</span></span><span class="x-chip x-r" data-sign="fred.DCOILWTICO.chg_pct" data-good="down"><span data-arr>▲</span> <span data-k="fred.DCOILWTICO.chg_pct" data-fmt="pctchg">+8.14%</span></span></div>
+          <div class="x-tile x-r" data-st="MORTGAGE30US"><span class="x-tile__label"><i class="x-dot"></i>30年房贷 · <span data-k="fred.MORTGAGE30US.date" data-fmt="md">10/22</span></span><span class="x-note">购房融资成本，升高会压制楼市</span><span class="x-tile__fig" data-k="fred.MORTGAGE30US.value" data-fmt="pct2">7.32%</span><span class="x-chip x-r" data-sign="fred.MORTGAGE30US.chg_bp" data-good="down"><span data-arr>▲</span> <span data-k="fred.MORTGAGE30US.chg_bp" data-fmt="bp">+74bp</span></span></div>
+          <div class="x-tile x-r" data-st="CPIAUCSL"><span class="x-tile__label"><i class="x-dot"></i>CPI 同比 · <span data-k="fred.CPIAUCSL.date" data-fmt="mon">9月</span></span><span class="x-note">消费价格涨幅，决定美联储降息空间</span><span class="x-tile__fig" data-k="fred.CPIAUCSL.yoy_pct" data-fmt="pct2">3.72%</span><span class="x-chip x-r" data-sign="fred.CPIAUCSL.yoy_chg_pt" data-good="down"><span data-arr>▲</span> <span data-k="fred.CPIAUCSL.yoy_chg_pt" data-fmt="pt2">+0.37pt</span></span></div>
+          <div class="x-tile x-a" data-st="DGS10@lvl"><span class="x-tile__label"><i class="x-dot"></i>10年期美债 · <span data-k="fred.DGS10.date" data-fmt="md">10/21</span></span><span class="x-note">长期借贷成本之锚，影响房贷与估值</span><span class="x-tile__fig" data-k="fred.DGS10.value" data-fmt="pct2">5.13%</span><span class="x-chip x-g" data-sign="fred.DGS10.chg_bp" data-good="down"><span data-arr>▼</span> <span data-k="fred.DGS10.chg_bp" data-fmt="bp">−11bp</span></span></div>
+          <div class="x-tile x-a" data-st="BAMLH0A0HYM2@lvl"><span class="x-tile__label"><i class="x-dot"></i>高收益利差 · <span data-k="fred.BAMLH0A0HYM2.date" data-fmt="md">10/21</span></span><span class="x-note">垃圾债比国债多要的收益，走阔=担心违约</span><span class="x-tile__fig" data-k="fred.BAMLH0A0HYM2.value" data-fmt="pct2">3.27%</span><span class="x-chip x-r" data-sign="fred.BAMLH0A0HYM2.chg_bp" data-good="down"><span data-arr>▲</span> <span data-k="fred.BAMLH0A0HYM2.chg_bp" data-fmt="bp">+17bp</span></span></div>
+          <div class="x-tile x-a" data-st="UNRATE@lvl"><span class="x-tile__label"><i class="x-dot"></i>失业率 · <span data-k="fred.UNRATE.date" data-fmt="mon">9月</span></span><span class="x-note">找不到工作者占比，升得快预示衰退</span><span class="x-tile__fig" data-k="fred.UNRATE.value" data-fmt="pct1">4.2%</span><span class="x-chip x-r" data-sign="fred.UNRATE.chg_bp" data-good="down"><span data-arr>▲</span> <span data-k="fred.UNRATE.chg_bp" data-fmt="ptbp">+0.1pt</span></span></div>
+          <div class="x-tile x-g" data-st="VIXCLS@lvl"><span class="x-tile__label"><i class="x-dot"></i>VIX · <span data-k="fred.VIXCLS.date" data-fmt="md">10/21</span></span><span class="x-note">标普期权隐含波动率，俗称“恐慌指数”</span><span class="x-tile__fig" data-k="fred.VIXCLS.value" data-fmt="num2">16.68</span><span class="x-chip x-r" data-sign="fred.VIXCLS.chg_pct" data-good="down"><span data-arr>▲</span> <span data-k="fred.VIXCLS.chg_pct" data-fmt="pctchg">+8.95%</span></span></div>
+          <div class="x-tile x-g" data-st="SP500"><span class="x-tile__label"><i class="x-dot"></i>标普500 · <span data-k="fred.SP500.date" data-fmt="md">10/21</span></span><span class="x-note">美国大盘股表现，反映市场风险偏好</span><span class="x-tile__fig" data-k="fred.SP500.value" data-fmt="num0">7,757</span><span class="x-chip x-g" data-sign="fred.SP500.chg_pct" data-good="up"><span data-arr>▲</span> <span data-k="fred.SP500.chg_pct" data-fmt="pctchg">+0.45%</span></span></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">前值/对比值</th><th scope="col">变化</th><th scope="col">方向</th></tr>
+              </thead>
+              <tbody>
+                <tr class="x-group"><th scope="colgroup" colspan="6">市场</th></tr>
+                <tr class="x-g" data-st="SP500"><th scope="row"><i class="x-dot" role="img" aria-label="有利"></i>标普500</th><td class="num" data-k="fred.SP500.value" data-fmt="num2">7,757.17</td><td class="muted" data-k="fred.SP500.date" data-fmt="md">10/21</td><td><span data-k="fred.SP500.prev" data-fmt="num2">7,722.72</span> <small data-k="fred.SP500.prev_date" data-fmt="md">10/02</small></td><td class="num x-chg" data-k="fred.SP500.chg_pct" data-fmt="pctchg">+0.45%</td><td><span class="x-arr" data-sign="fred.SP500.chg_pct" aria-label="上升">▲</span></td></tr>
+                <tr class="x-r" data-st="VIXCLS"><th scope="row"><i class="x-dot" role="img" aria-label="不利"></i>VIX<button class="x-info" type="button" aria-expanded="false" aria-label="VIX 说明" title="标普期权隐含波动率，俗称“恐慌指数”">ⓘ</button><span class="x-tip" role="note">标普期权隐含波动率，俗称“恐慌指数”</span></th><td class="num" data-k="fred.VIXCLS.value" data-fmt="num2">16.68</td><td class="muted" data-k="fred.VIXCLS.date" data-fmt="md">10/21</td><td><span data-k="fred.VIXCLS.prev" data-fmt="num2">15.31</span> <small data-k="fred.VIXCLS.prev_date" data-fmt="md">10/02</small></td><td class="num x-chg" data-k="fred.VIXCLS.chg_pct" data-fmt="pctchg">+8.95%</td><td><span class="x-arr" data-sign="fred.VIXCLS.chg_pct" aria-label="上升">▲</span></td></tr>
+                <tr class="x-n" data-st="DTWEXBGS"><th scope="row"><i class="x-dot" role="img" aria-label="中性"></i>美元广义指数</th><td class="num" data-k="fred.DTWEXBGS.value" data-fmt="num2">121.40</td><td class="muted" data-k="fred.DTWEXBGS.date" data-fmt="md">10/16</td><td><span data-k="fred.DTWEXBGS.prev" data-fmt="num2">120.70</span> <small data-k="fred.DTWEXBGS.prev_date" data-fmt="md">9/28</small></td><td class="num x-chg" data-k="fred.DTWEXBGS.chg_pct" data-fmt="pctchg">+0.59%</td><td><span class="x-arr" data-sign="fred.DTWEXBGS.chg_pct" aria-label="上升">▲</span></td></tr>
+                <tr class="x-n" data-st="DEXJPUS"><th scope="row"><i class="x-dot" role="img" aria-label="中性"></i>美元/日元</th><td class="num" data-k="fred.DEXJPUS.value" data-fmt="num2">158.00</td><td class="muted" data-k="fred.DEXJPUS.date" data-fmt="md">10/16</td><td><span data-k="fred.DEXJPUS.prev" data-fmt="num2">157.44</span> <small data-k="fred.DEXJPUS.prev_date" data-fmt="md">9/28</small></td><td class="num x-chg" data-k="fred.DEXJPUS.chg_pct" data-fmt="pctchg">+0.36%</td><td><span class="x-arr" data-sign="fred.DEXJPUS.chg_pct" aria-label="上升">▲</span></td></tr>
+                <tr class="x-n" data-st="DEXUSEU"><th scope="row"><i class="x-dot" role="img" aria-label="中性"></i>欧元/美元</th><td class="num" data-k="fred.DEXUSEU.value" data-fmt="num4">1.1231</td><td class="muted" data-k="fred.DEXUSEU.date" data-fmt="md">10/16</td><td><span data-k="fred.DEXUSEU.prev" data-fmt="num4">1.1367</span> <small data-k="fred.DEXUSEU.prev_date" data-fmt="md">9/28</small></td><td class="num x-chg" data-k="fred.DEXUSEU.chg_pct" data-fmt="pctchg">−1.20%</td><td><span class="x-arr" data-sign="fred.DEXUSEU.chg_pct" aria-label="下降">▼</span></td></tr>
+                <tr class="x-r" data-st="DCOILWTICO"><th scope="row"><i class="x-dot" role="img" aria-label="不利"></i>WTI 原油</th><td class="num">$<span data-k="fred.DCOILWTICO.value" data-fmt="num2">107.89</span></td><td class="muted" data-k="fred.DCOILWTICO.date" data-fmt="md">10/20</td><td>$<span data-k="fred.DCOILWTICO.prev" data-fmt="num2">99.77</span> <small data-k="fred.DCOILWTICO.prev_date" data-fmt="md">10/01</small></td><td class="num x-chg" data-k="fred.DCOILWTICO.chg_pct" data-fmt="pctchg">+8.14%</td><td><span class="x-arr" data-sign="fred.DCOILWTICO.chg_pct" aria-label="上升">▲</span></td></tr>
+                <tr class="x-r" data-st="DCOILBRENTEU"><th scope="row"><i class="x-dot" role="img" aria-label="不利"></i>布伦特原油</th><td class="num">$<span data-k="fred.DCOILBRENTEU.value" data-fmt="num2">115.22</span></td><td class="muted" data-k="fred.DCOILBRENTEU.date" data-fmt="md">10/20</td><td>$<span data-k="fred.DCOILBRENTEU.prev" data-fmt="num2">114.82</span> <small data-k="fred.DCOILBRENTEU.prev_date" data-fmt="md"></small></td><td class="num x-chg" data-k="fred.DCOILBRENTEU.chg_pct" data-fmt="pctchg">+0.35%</td><td><span class="x-arr" data-sign="fred.DCOILBRENTEU.chg_pct" aria-label="上升">▲</span></td></tr>
+                <tr class="x-a" data-st="DHHNGSP"><th scope="row"><i class="x-dot" role="img" aria-label="需留意"></i>Henry Hub 天然气</th><td class="num">$<span data-k="fred.DHHNGSP.value" data-fmt="num2">3.10</span></td><td class="muted" data-k="fred.DHHNGSP.date" data-fmt="md">10/20</td><td>$<span data-k="fred.DHHNGSP.prev" data-fmt="num2">3.00</span> <small data-k="fred.DHHNGSP.prev_date" data-fmt="md"></small></td><td class="num x-chg" data-k="fred.DHHNGSP.chg_pct" data-fmt="pctchg">+3.33%</td><td><span class="x-arr" data-sign="fred.DHHNGSP.chg_pct" aria-label="上升">▲</span></td></tr>
+                <tr class="x-group"><th scope="colgroup" colspan="6">利率</th></tr>
+                <tr class="x-n" data-st="DGS2"><th scope="row"><i class="x-dot" role="img" aria-label="中性"></i>2年期美债<button class="x-info" type="button" aria-expanded="false" aria-label="2年期美债 说明" title="对美联储利率预期最敏感的国债收益率">ⓘ</button><span class="x-tip" role="note">对美联储利率预期最敏感的国债收益率</span></th><td class="num" data-k="fred.DGS2.value" data-fmt="pct2">4.81%</td><td class="muted" data-k="fred.DGS2.date" data-fmt="md">10/21</td><td><span data-k="fred.DGS2.prev" data-fmt="pct2">4.78%</span> <small data-k="fred.DGS2.prev_date" data-fmt="md">10/01</small></td><td class="num x-chg" data-k="fred.DGS2.chg_bp" data-fmt="bp">+3bp</td><td><span class="x-arr" data-sign="fred.DGS2.chg_bp" aria-label="上升">▲</span></td></tr>
+                <tr class="x-g" data-st="DGS10"><th scope="row"><i class="x-dot" role="img" aria-label="有利"></i>10年期美债<button class="x-info" type="button" aria-expanded="false" aria-label="10年期美债 说明" title="长期借贷成本之锚，影响房贷与股市估值">ⓘ</button><span class="x-tip" role="note">长期借贷成本之锚，影响房贷与股市估值</span></th><td class="num" data-k="fred.DGS10.value" data-fmt="pct2">5.13%</td><td class="muted" data-k="fred.DGS10.date" data-fmt="md">10/21</td><td><span data-k="fred.DGS10.prev" data-fmt="pct2">5.24%</span> <small data-k="fred.DGS10.prev_date" data-fmt="md">10/01</small></td><td class="num x-chg" data-k="fred.DGS10.chg_bp" data-fmt="bp">−11bp</td><td><span class="x-arr" data-sign="fred.DGS10.chg_bp" aria-label="下降">▼</span></td></tr>
+                <tr class="x-g" data-st="DGS30"><th scope="row"><i class="x-dot" role="img" aria-label="有利"></i>30年期美债</th><td class="num" data-k="fred.DGS30.value" data-fmt="pct2">5.42%</td><td class="muted" data-k="fred.DGS30.date" data-fmt="md">10/21</td><td><span data-k="fred.DGS30.prev" data-fmt="pct2">5.61%</span> <small data-k="fred.DGS30.prev_date" data-fmt="md"></small></td><td class="num x-chg" data-k="fred.DGS30.chg_bp" data-fmt="bp">−19bp</td><td><span class="x-arr" data-sign="fred.DGS30.chg_bp" aria-label="下降">▼</span></td></tr>
+                <tr class="x-a" data-st="T10Y2Y"><th scope="row"><i class="x-dot" role="img" aria-label="需留意"></i>10Y−2Y 利差<button class="x-info" type="button" aria-expanded="false" aria-label="10Y−2Y 利差 说明" title="长短端利差，倒挂(<0)常被视为衰退前兆">ⓘ</button><span class="x-tip" role="note">长短端利差，倒挂(&lt;0)常被视为衰退前兆</span></th><td class="num" data-k="fred.T10Y2Y.value" data-fmt="pct2">0.31%</td><td class="muted" data-k="fred.T10Y2Y.date" data-fmt="md">10/22</td><td><span data-k="fred.T10Y2Y.prev" data-fmt="pct2">0.45%</span> <small data-k="fred.T10Y2Y.prev_date" data-fmt="md">10/02</small></td><td class="num x-chg" data-k="fred.T10Y2Y.chg_bp" data-fmt="bp">−14bp</td><td><span class="x-arr" data-sign="fred.T10Y2Y.chg_bp" aria-label="下降">▼</span></td></tr>
+                <tr class="x-g" data-st="DFII10"><th scope="row"><i class="x-dot" role="img" aria-label="有利"></i>10年期 TIPS<button class="x-info" type="button" aria-expanded="false" aria-label="TIPS 实际利率 说明" title="剔除通胀后的真实借贷成本，越高越紧缩">ⓘ</button> <small>实际收益率</small><span class="x-tip" role="note">剔除通胀后的真实借贷成本，越高越紧缩</span></th><td class="num" data-k="fred.DFII10.value" data-fmt="pct2">2.76%</td><td class="muted" data-k="fred.DFII10.date" data-fmt="md">10/21</td><td><span data-k="fred.DFII10.prev" data-fmt="pct2">2.88%</span> <small data-k="fred.DFII10.prev_date" data-fmt="md">10/01</small></td><td class="num x-chg" data-k="fred.DFII10.chg_bp" data-fmt="bp">−12bp</td><td><span class="x-arr" data-sign="fred.DFII10.chg_bp" aria-label="下降">▼</span></td></tr>
+                <tr class="x-g" data-st="T10YIE"><th scope="row"><i class="x-dot" role="img" aria-label="有利"></i>10年盈亏平衡通胀<button class="x-info" type="button" aria-expanded="false" aria-label="盈亏平衡通胀 说明" title="市场预期的未来10年平均通胀率">ⓘ</button><span class="x-tip" role="note">市场预期的未来10年平均通胀率</span></th><td class="num" data-k="fred.T10YIE.value" data-fmt="pct2">2.32%</td><td class="muted" data-k="fred.T10YIE.date" data-fmt="md">10/22</td><td><span data-k="fred.T10YIE.prev" data-fmt="pct2">2.36%</span> <small data-k="fred.T10YIE.prev_date" data-fmt="md">10/02</small></td><td class="num x-chg" data-k="fred.T10YIE.chg_bp" data-fmt="bp">−4bp</td><td><span class="x-arr" data-sign="fred.T10YIE.chg_bp" aria-label="下降">▼</span></td></tr>
+                <tr class="x-n" data-st="SOFR"><th scope="row"><i class="x-dot" role="img" aria-label="中性"></i>SOFR<button class="x-info" type="button" aria-expanded="false" aria-label="SOFR 说明" title="隔夜回购担保利率，美元短端资金成本基准">ⓘ</button><span class="x-tip" role="note">隔夜回购担保利率，美元短端资金成本基准</span></th><td class="num" data-k="fred.SOFR.value" data-fmt="pct2">3.88%</td><td class="muted" data-k="fred.SOFR.date" data-fmt="md">10/21</td><td><span data-k="fred.SOFR.prev" data-fmt="pct2">3.87%</span> <small data-k="fred.SOFR.prev_date" data-fmt="md">10/01</small></td><td class="num x-chg" data-k="fred.SOFR.chg_bp" data-fmt="bp">+1bp</td><td><span class="x-arr" data-sign="fred.SOFR.chg_bp" aria-label="上升">▲</span></td></tr>
+                <tr class="x-r" data-st="MORTGAGE30US"><th scope="row"><i class="x-dot" role="img" aria-label="不利"></i>30年期房贷<button class="x-info" type="button" aria-expanded="false" aria-label="30年期房贷 说明" title="购房融资成本，升高会压制楼市">ⓘ</button><span class="x-tip" role="note">购房融资成本，升高会压制楼市</span></th><td class="num" data-k="fred.MORTGAGE30US.value" data-fmt="pct2">7.32%</td><td class="muted" data-k="fred.MORTGAGE30US.date" data-fmt="md">10/22</td><td><span data-k="fred.MORTGAGE30US.prev" data-fmt="pct2">6.58%</span> <small data-k="fred.MORTGAGE30US.prev_date" data-fmt="md">7/23</small></td><td class="num x-chg" data-k="fred.MORTGAGE30US.chg_bp" data-fmt="bp">+74bp</td><td><span class="x-arr" data-sign="fred.MORTGAGE30US.chg_bp" aria-label="上升">▲</span></td></tr>
+                <tr class="x-group"><th scope="colgroup" colspan="6">实体经济</th></tr>
+                <tr class="x-r" data-st="CPIAUCSL"><th scope="row"><i class="x-dot" role="img" aria-label="不利"></i>CPI 同比</th><td class="num" data-k="fred.CPIAUCSL.yoy_pct" data-fmt="pct2">3.72%</td><td class="muted" data-k="fred.CPIAUCSL.date" data-fmt="mon">9月</td><td><span data-k="fred.CPIAUCSL.yoy_prev_pct" data-fmt="pct2">3.35%</span> <small data-k="fred.CPIAUCSL.prev_date" data-fmt="mon">8月</small></td><td class="num x-chg" data-k="fred.CPIAUCSL.yoy_chg_pt" data-fmt="pt2">+0.37pt</td><td><span class="x-arr" data-sign="fred.CPIAUCSL.yoy_chg_pt" aria-label="上升">▲</span></td></tr>
+                <tr class="x-a" data-st="CPILFESL"><th scope="row"><i class="x-dot" role="img" aria-label="需留意"></i>核心 CPI 同比</th><td class="num" data-k="fred.CPILFESL.yoy_pct" data-fmt="pct2">2.57%</td><td class="muted" data-k="fred.CPILFESL.date" data-fmt="mon">9月</td><td><span data-k="fred.CPILFESL.yoy_prev_pct" data-fmt="pct2">2.45%</span> <small data-k="fred.CPILFESL.prev_date" data-fmt="mon">8月</small></td><td class="num x-chg" data-k="fred.CPILFESL.yoy_chg_pt" data-fmt="pt2">+0.12pt</td><td><span class="x-arr" data-sign="fred.CPILFESL.yoy_chg_pt" aria-label="上升">▲</span></td></tr>
+                <tr class="x-a" data-st="PCEPILFE"><th scope="row"><i class="x-dot" role="img" aria-label="需留意"></i>核心 PCE 同比<button class="x-info" type="button" aria-expanded="false" aria-label="核心 PCE 说明" title="剔除食品能源的消费价格，美联储首选通胀指标">ⓘ</button><span class="x-tip" role="note">剔除食品能源的消费价格，美联储首选通胀指标</span></th><td class="num" data-k="fred.PCEPILFE.yoy_pct" data-fmt="pct2">3.01%</td><td class="muted" data-k="fred.PCEPILFE.date" data-fmt="mon">8月</td><td><span data-k="fred.PCEPILFE.yoy_prev_pct" data-fmt="pct2">2.98%</span> <small data-k="fred.PCEPILFE.prev_date" data-fmt="mon">7月</small></td><td class="num x-chg" data-k="fred.PCEPILFE.yoy_chg_pt" data-fmt="pt2">+0.03pt</td><td><span class="x-arr" data-sign="fred.PCEPILFE.yoy_chg_pt" aria-label="上升">▲</span></td></tr>
+                <tr class="x-r" data-st="UNRATE"><th scope="row"><i class="x-dot" role="img" aria-label="不利"></i>失业率</th><td class="num" data-k="fred.UNRATE.value" data-fmt="pct1">4.2%</td><td class="muted" data-k="fred.UNRATE.date" data-fmt="mon">9月</td><td><span data-k="fred.UNRATE.prev" data-fmt="pct1">4.1%</span> <small data-k="fred.UNRATE.prev_date" data-fmt="mon">8月</small></td><td class="num x-chg" data-k="fred.UNRATE.chg_bp" data-fmt="ptbp">+0.1pt</td><td><span class="x-arr" data-sign="fred.UNRATE.chg_bp" aria-label="上升">▲</span></td></tr>
+                <tr class="x-r" data-st="PAYEMS"><th scope="row"><i class="x-dot" role="img" aria-label="不利"></i>非农新增<button class="x-info" type="button" aria-expanded="false" aria-label="非农新增 说明" title="每月新增非农就业人数，就业市场最核心数据">ⓘ</button><span class="x-tip" role="note">每月新增非农就业人数，就业市场最核心数据</span></th><td class="num"><span data-k="fred.PAYEMS.mom_k" data-fmt="sk">+29k</span> <small>3月均 <span data-k="fred.PAYEMS.avg3_k" data-fmt="wan">+5.1万</span></small></td><td class="muted" data-k="fred.PAYEMS.date" data-fmt="mon">9月</td><td><span data-k="fred.PAYEMS.mom_k_prev" data-fmt="sk">+133k</span> <small data-k="fred.PAYEMS.prev_date" data-fmt="mon">8月</small></td><td class="num x-chg" data-k="fred.PAYEMS.mom_k_chg" data-fmt="sk">−104k</td><td><span class="x-arr" data-sign="fred.PAYEMS.mom_k_chg" aria-label="下降">▼</span></td></tr>
+                <tr class="x-g" data-st="ICSA"><th scope="row"><i class="x-dot" role="img" aria-label="有利"></i>初请失业金<button class="x-info" type="button" aria-expanded="false" aria-label="初请失业金 说明" title="每周首次申领失业金人数，裁员的最快信号">ⓘ</button><span class="x-tip" role="note">每周首次申领失业金人数，裁员的最快信号</span></th><td class="num" data-k="fred.ICSA.value" data-fmt="k">194k</td><td class="muted"><span data-k="fred.ICSA.date" data-fmt="md">10/17</span> 当周</td><td><span data-k="fred.ICSA.prev" data-fmt="k">189k</span> <small data-k="fred.ICSA.prev_date" data-fmt="md">7/18</small></td><td class="num x-chg" data-k="fred.ICSA.chg_pct" data-fmt="pctchg">+2.65%</td><td><span class="x-arr" data-sign="fred.ICSA.chg_pct" aria-label="上升">▲</span></td></tr>
+                <tr class="x-a" data-st="A191RL1Q225SBEA"><th scope="row"><i class="x-dot" role="img" aria-label="需留意"></i>实际 GDP <small>环比年化</small></th><td class="num" data-k="fred.A191RL1Q225SBEA.value" data-fmt="pct1">2.2%</td><td class="muted" data-k="fred.A191RL1Q225SBEA.date" data-fmt="q">2026Q2</td><td><span data-k="fred.A191RL1Q225SBEA.prev" data-fmt="pct1">2.5%</span> <small data-k="fred.A191RL1Q225SBEA.prev_date" data-fmt="q">2026Q1</small></td><td class="num x-chg" data-k="fred.A191RL1Q225SBEA.chg_bp" data-fmt="ptbp">−0.3pt</td><td><span class="x-arr" data-sign="fred.A191RL1Q225SBEA.chg_bp" aria-label="下降">▼</span></td></tr>
+                <tr class="x-g" data-st="RSAFS"><th scope="row"><i class="x-dot" role="img" aria-label="有利"></i>零售销售 环比</th><td class="num"><span data-k="fred.RSAFS.mom_pct" data-fmt="pctchg">+0.77%</span> <small>实际同比 <span data-k="other.derived.rsafs_real_yoy.value" data-fmt="snum2">+2.48</span>%</small></td><td class="muted" data-k="fred.RSAFS.date" data-fmt="mon">9月</td><td><span data-k="fred.RSAFS.mom_pct_prev" data-fmt="pctchg">+1.29%</span> <small data-k="fred.RSAFS.prev_date" data-fmt="mon">8月</small></td><td class="num x-chg" data-k="fred.RSAFS.mom_pct_chg" data-fmt="pt2">−0.52pt</td><td><span class="x-arr" data-sign="fred.RSAFS.mom_pct_chg" aria-label="下降">▼</span></td></tr>
+                <tr class="x-group"><th scope="colgroup" colspan="6">信贷与流动性</th></tr>
+                <tr class="x-r" data-st="BAMLH0A0HYM2"><th scope="row"><i class="x-dot" role="img" aria-label="不利"></i>高收益债利差 HY OAS<button class="x-info" type="button" aria-expanded="false" aria-label="HY OAS 说明" title="垃圾债比国债多要的收益，走阔=市场担心违约">ⓘ</button><span class="x-tip" role="note">垃圾债比国债多要的收益，走阔=市场担心违约</span></th><td class="num" data-k="fred.BAMLH0A0HYM2.value" data-fmt="pct2">3.27%</td><td class="muted" data-k="fred.BAMLH0A0HYM2.date" data-fmt="md">10/21</td><td><span data-k="fred.BAMLH0A0HYM2.prev" data-fmt="pct2">3.10%</span> <small data-k="fred.BAMLH0A0HYM2.prev_date" data-fmt="md">10/02</small></td><td class="num x-chg" data-k="fred.BAMLH0A0HYM2.chg_bp" data-fmt="bp">+17bp</td><td><span class="x-arr" data-sign="fred.BAMLH0A0HYM2.chg_bp" aria-label="上升">▲</span></td></tr>
+                <tr class="x-a" data-st="BAMLC0A0CM"><th scope="row"><i class="x-dot" role="img" aria-label="需留意"></i>投资级利差 IG OAS<button class="x-info" type="button" aria-expanded="false" aria-label="IG OAS 说明" title="优质公司债的风险溢价，反映企业融资压力">ⓘ</button><span class="x-tip" role="note">优质公司债的风险溢价，反映企业融资压力</span></th><td class="num" data-k="fred.BAMLC0A0CM.value" data-fmt="pct2">0.88%</td><td class="muted" data-k="fred.BAMLC0A0CM.date" data-fmt="md">10/21</td><td><span data-k="fred.BAMLC0A0CM.prev" data-fmt="pct2">0.85%</span> <small data-k="fred.BAMLC0A0CM.prev_date" data-fmt="md"></small></td><td class="num x-chg" data-k="fred.BAMLC0A0CM.chg_bp" data-fmt="bp">+3bp</td><td><span class="x-arr" data-sign="fred.BAMLC0A0CM.chg_bp" aria-label="上升">▲</span></td></tr>
+                <tr class="x-n" data-st="WALCL"><th scope="row"><i class="x-dot" role="img" aria-label="中性"></i>美联储总资产<button class="x-info" type="button" aria-expanded="false" aria-label="美联储总资产 说明" title="联储资产负债表规模，缩表即回收流动性">ⓘ</button><span class="x-tip" role="note">联储资产负债表规模，缩表即回收流动性</span></th><td class="num">$<span data-k="fred.WALCL.value" data-fmt="tn">6.754T</span></td><td class="muted" data-k="fred.WALCL.date" data-fmt="md">10/21</td><td>$<span data-k="fred.WALCL.prev" data-fmt="tn">6.747T</span> <small data-k="fred.WALCL.prev_date" data-fmt="md">7/22</small></td><td class="num x-chg" data-k="fred.WALCL.chg_pct" data-fmt="pctchg">+0.09%</td><td><span class="x-arr" data-sign="fred.WALCL.chg_pct" aria-label="上升">▲</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fineprint">前值未注日期者与同组上一行同期。bp = 基点，pt = 百分点。</p>
+            </div>
+          </details>
+        </section>
+
+        <section class="section" id="extended" data-nav="扩展">
+          <div class="head">
+            <h2>扩展指标</h2>
+            <p class="head__sub">16 组补充指标，点开查看。红 = 不利，黄 = 需留意，绿 = 有利，灰 = 中性；“—”为待更新，由每日更新填充。灰色条“N年分位”为当前值在近 N 年历史（N 为实际数据年数，最长10年）中的位置及标准差（σ）。</p>
+          </div>
+          <div class="x-folds">
+            <details class="x-fold">
+              <summary><span class="x-fold__num">01</span>美股估值层<span class="x-fold__src">数据源 multpl.com · FRED · Yahoo Finance</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-r" data-xs="CAPE" data-pct="other.valuation.cape"><th scope="row">Shiller CAPE<button class="x-info" type="button" aria-expanded="false" aria-label="Shiller CAPE 说明" title="周期调整市盈率=股价/过去10年通胀调整后平均盈利；越高代表长期回报预期越低">ⓘ</button> <small>multpl.com</small><span class="x-tip" role="note">周期调整市盈率=股价/过去10年通胀调整后平均盈利；越高代表长期回报预期越低</span></th><td class="num"><span data-k="other.valuation.cape.value" data-fmt="num2">40.36</span> <small>历史均值 <span data-k="other.valuation.cape.mean_all" data-fmt="num1">17.4</span> · 历史分位 <span data-k="other.valuation.cape.pctile_all" data-fmt="pctl">99%</span></small></td><td class="muted" data-k="other.valuation.cape.date" data-fmt="iso">2026-10-23</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>不利</span> <small>&gt;28 留意 · &gt;35 不利</small></td></tr>
+                    <tr class="x-r" data-xs="BUFFETT" data-pct="other.valuation.buffett"><th scope="row">巴菲特指标<button class="x-info" type="button" aria-expanded="false" aria-label="巴菲特指标 说明" title="非金融企业股权市值/GDP；&gt;200% 历史上属显著高估">ⓘ</button> <small>FRED NCBEILQ027S/GDP</small><span class="x-tip" role="note">非金融企业股权市值/GDP；&gt;200% 历史上属显著高估</span></th><td class="num"><span data-k="other.valuation.buffett.value" data-fmt="pct1">255.0%</span> <small>前值 <span data-k="other.valuation.buffett.prev" data-fmt="pct1">219.5%</span></small></td><td class="muted"><span data-k="other.valuation.buffett.date" data-fmt="q">2026Q2</span> 季度</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>不利</span> <small>&gt;150% 留意 · &gt;200% 不利</small></td></tr>
+                    <tr class="x-r" data-xs="ERP"><th scope="row">股票风险溢价<button class="x-info" type="button" aria-expanded="false" aria-label="股票风险溢价 说明" title="股票相对国债的额外回报；为负表示股票收益率低于无风险国债">ⓘ</button><span class="x-tip" role="note">股票相对国债的额外回报；为负表示股票收益率低于无风险国债</span></th><td class="num"><span data-k="other.valuation.erp.value" data-fmt="pt2">−1.12pt</span> <small>盈利收益率 <span data-k="other.valuation.erp.ey" data-fmt="pct2">3.84%</span> − 10Y <span data-k="other.valuation.erp.dgs10" data-fmt="pct2">4.96%</span>；CAPE实际口径 <span data-k="other.valuation.erp_cape_real.value" data-fmt="pt2">−0.16pt</span></small></td><td class="muted" data-k="other.valuation.erp.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>不利</span> <small>&lt;1.5 留意 · &lt;0 不利</small></td></tr>
+                    <tr class="x-g" data-xs="DD52"><th scope="row">标普距52周高点</th><td class="num"><span data-k="other.valuation.sp500_dd_52w.value" data-fmt="pctchg">−0.79%</span> <small>高点 <span data-k="other.valuation.sp500_dd_52w.high" data-fmt="num2">7,818.93</span>（<span data-k="other.valuation.sp500_dd_52w.high_date" data-fmt="iso">2026-10-06</span>）</small></td><td class="muted" data-k="other.valuation.sp500_dd_52w.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&lt;−5% 留意 · &lt;−10% 不利</small></td></tr>
+                    <tr class="x-n" data-xs="PETTM"><th scope="row">标普 TTM 市盈率</th><td class="num" data-k="other.valuation.pe_ttm.value" data-fmt="num2">26.01</td><td class="muted" data-k="other.valuation.pe_ttm.date" data-fmt="iso">2026-10-23</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">02</span>波动率结构<span class="x-fold__src">数据源 Cboe、FRED、Yahoo Finance</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-a" data-xs="VVIX"><th scope="row">VVIX<button class="x-info" type="button" aria-expanded="false" aria-label="VVIX 说明" title="衡量市场对“恐慌指数本身会大幅波动”的担忧">ⓘ</button> <small>VIX 的波动率</small><span class="x-tip" role="note">衡量市场对“恐慌指数本身会大幅波动”的担忧</span></th><td class="num" data-k="other.cboe.VVIX.value" data-fmt="num2">107.94</td><td class="muted" data-k="other.cboe.VVIX.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;110 留意 · &gt;125 不利</small></td></tr>
+                    <tr class="x-a" data-xs="SKEW"><th scope="row">SKEW 尾部风险指数<button class="x-info" type="button" aria-expanded="false" aria-label="SKEW 说明" title="越高表示投资者越愿意花钱防暴跌">ⓘ</button><span class="x-tip" role="note">越高表示投资者越愿意花钱防暴跌</span></th><td class="num" data-k="other.cboe.SKEW.value" data-fmt="num2">152.39</td><td class="muted" data-k="other.cboe.SKEW.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;155 留意 · &gt;165 不利</small></td></tr>
+                    <tr class="x-n" data-xs="VIX9D"><th scope="row">VIX9D<button class="x-info" type="button" aria-expanded="false" aria-label="VIX9D 说明" title="超短期恐慌程度，高于 VIX 表示近期事件风险大">ⓘ</button> <small>9 天期</small><span class="x-tip" role="note">超短期恐慌程度，高于 VIX 表示近期事件风险大</span></th><td class="num" data-k="other.cboe.VIX9D.value" data-fmt="num2">18.86</td><td class="muted" data-k="other.cboe.VIX9D.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="VIX1D"><th scope="row">VIX1D <small>1 天期</small></th><td class="num" data-k="other.cboe.VIX1D.value" data-fmt="num2">15.18</td><td class="muted" data-k="other.cboe.VIX1D.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-g" data-xs="MOVE"><th scope="row">MOVE 美债波动率<button class="x-info" type="button" aria-expanded="false" aria-label="MOVE 说明" title="美债期权隐含波动率（ICE BofA MOVE），反映市场对未来一个月美债利率波动的预期；&gt;110 需留意，&gt;120 压力区（与危机灯一致）">ⓘ</button> <small>Yahoo Finance (^MOVE)</small><span class="x-tip" role="note">美债期权隐含波动率（ICE BofA MOVE），反映市场对未来一个月美债利率波动的预期；&gt;110 需留意，&gt;120 压力区（与危机灯一致）</span></th><td class="num"><span data-k="other.move.value" data-fmt="num2">103.31</span> <small>前值 <span data-k="other.move.prev" data-fmt="num2">106.84</span> · 日变化 <span data-k="other.move.chg_pct" data-fmt="spct1">−3.3%</span> · 1年分位 <span data-k="other.move.pctile_1y" data-fmt="pctl">95%</span></small></td><td class="muted" data-k="other.move.date" data-fmt="iso">2026-10-23</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;110 留意 · &gt;120 不利</small></td></tr>
+                    <tr class="x-r" data-xs="OVX"><th scope="row">原油波动率 OVX<button class="x-info" type="button" aria-expanded="false" aria-label="OVX 说明" title="油价波动越大，通胀与企业成本越不确定">ⓘ</button><span class="x-tip" role="note">油价波动越大，通胀与企业成本越不确定</span></th><td class="num"><span data-k="fred.OVXCLS.value" data-fmt="num2">53.28</span> <small>较前值 <span data-k="fred.OVXCLS.chg_pct" data-fmt="pctchg">+4.47%</span></small></td><td class="muted" data-k="fred.OVXCLS.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>不利</span> <small>&gt;45 留意 · &gt;60 不利</small></td></tr>
+                    <tr class="x-n" data-xs="GVZ"><th scope="row">黄金波动率 GVZ</th><td class="num"><span data-k="fred.GVZCLS.value" data-fmt="num2">21.36</span> <small>较前值 <span data-k="fred.GVZCLS.chg_pct" data-fmt="pctchg">−8.05%</span></small></td><td class="muted" data-k="fred.GVZCLS.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;25 留意 · &gt;35 不利</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">03</span>收益率曲线补全<span class="x-fold__src">数据源 FRED</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-n" data-xs="n"><th scope="row">1个月期美债<button class="x-info" type="button" aria-expanded="false" aria-label="期限补全 说明" title="补全短中长端，看曲线形状">ⓘ</button><span class="x-tip" role="note">补全短中长端，看曲线形状</span></th><td class="num"><span data-k="fred.DGS1MO.value" data-fmt="pct2">4.09%</span> <small>较前值 <span data-k="fred.DGS1MO.chg_bp" data-fmt="bp">+3bp</span></small></td><td class="muted" data-k="fred.DGS1MO.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">3个月期美债</th><td class="num"><span data-k="fred.DGS3MO.value" data-fmt="pct2">4.25%</span> <small>较前值 <span data-k="fred.DGS3MO.chg_bp" data-fmt="bp">+8bp</span></small></td><td class="muted" data-k="fred.DGS3MO.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">5年期美债</th><td class="num"><span data-k="fred.DGS5.value" data-fmt="pct2">4.95%</span> <small>较前值 <span data-k="fred.DGS5.chg_bp" data-fmt="bp">−6bp</span></small></td><td class="muted" data-k="fred.DGS5.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">20年期美债</th><td class="num"><span data-k="fred.DGS20.value" data-fmt="pct2">5.47%</span> <small>较前值 <span data-k="fred.DGS20.chg_bp" data-fmt="bp">−17bp</span></small></td><td class="muted" data-k="fred.DGS20.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-a" data-xs="DFII5"><th scope="row">5年实际利率<button class="x-info" type="button" aria-expanded="false" aria-label="实际利率 说明" title="扣除通胀后的真实借钱成本">ⓘ</button><span class="x-tip" role="note">扣除通胀后的真实借钱成本</span></th><td class="num"><span data-k="fred.DFII5.value" data-fmt="pct2">2.55%</span> <small>较前值 <span data-k="fred.DFII5.chg_bp" data-fmt="bp">−10bp</span></small></td><td class="muted" data-k="fred.DFII5.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;2.5% 偏紧</small></td></tr>
+                    <tr class="x-a" data-xs="DFII30"><th scope="row">30年实际利率</th><td class="num"><span data-k="fred.DFII30.value" data-fmt="pct2">3.15%</span> <small>较前值 <span data-k="fred.DFII30.chg_bp" data-fmt="bp">−16bp</span></small></td><td class="muted" data-k="fred.DFII30.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;2.5% 偏紧</small></td></tr>
+                    <tr class="x-g" data-xs="T5YIFR"><th scope="row">5年后5年远期通胀预期<button class="x-info" type="button" aria-expanded="false" aria-label="5y5y 说明" title="市场对长期通胀的信心">ⓘ</button><span class="x-tip" role="note">市场对长期通胀的信心</span></th><td class="num"><span data-k="fred.T5YIFR.value" data-fmt="pct2">2.19%</span> <small>较前值 <span data-k="fred.T5YIFR.chg_bp" data-fmt="bp">−16bp</span></small></td><td class="muted" data-k="fred.T5YIFR.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>2–2.5% 稳定 · &gt;2.7% 留意</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">04</span>前端资金市场<span class="x-fold__src">数据源 纽约联储</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-n" data-xs="OBFR"><th scope="row">OBFR <small>隔夜银行融资利率</small></th><td class="num"><span data-k="fred.OBFR.value" data-fmt="pct2">3.88%</span> <small>较前值 <span data-k="fred.OBFR.chg_bp" data-fmt="bp">0bp</span></small></td><td class="muted" data-k="fred.OBFR.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="TGCR"><th scope="row">TGCR <small>三方一般担保回购</small></th><td class="num" data-k="other.nyfed.TGCR.rate" data-fmt="pct2">3.86%</td><td class="muted" data-k="other.nyfed.TGCR.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="BGCR"><th scope="row">BGCR <small>广义一般担保回购</small></th><td class="num" data-k="other.nyfed.BGCR.rate" data-fmt="pct2">3.86%</td><td class="muted" data-k="other.nyfed.BGCR.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">SOFR 30日均值<button class="x-info" type="button" aria-expanded="false" aria-label="SOFR 均值 说明" title="回购利率突然高于政策利率上限＝资金紧张">ⓘ</button><span class="x-tip" role="note">回购利率突然高于政策利率上限＝资金紧张</span></th><td class="num" data-k="other.nyfed.SOFRAI.avg30" data-fmt="pct2">3.89%</td><td class="muted" data-k="other.nyfed.SOFRAI.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">SOFR 90日均值</th><td class="num" data-k="other.nyfed.SOFRAI.avg90" data-fmt="pct2">3.75%</td><td class="muted" data-k="other.nyfed.SOFRAI.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">05</span>美元细分<span class="x-fold__src">数据源 FRED</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-n" data-xs="n"><th scope="row">美元指数 <small>对发达经济体</small></th><td class="num"><span data-k="fred.DTWEXAFEGS.value" data-fmt="num2">114.67</span> <small>较前值 <span data-k="fred.DTWEXAFEGS.chg_pct" data-fmt="pctchg">+0.44%</span></small></td><td class="muted" data-k="fred.DTWEXAFEGS.date" data-fmt="iso">2026-10-16</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">美元指数<button class="x-info" type="button" aria-expanded="false" aria-label="新兴市场美元指数 说明" title="新兴市场美元走强通常意味着全球美元流动性收紧">ⓘ</button> <small>对新兴市场</small><span class="x-tip" role="note">新兴市场美元走强通常意味着全球美元流动性收紧</span></th><td class="num"><span data-k="fred.DTWEXEMEGS.value" data-fmt="num2">129.98</span> <small>较前值 <span data-k="fred.DTWEXEMEGS.chg_pct" data-fmt="pctchg">+0.73%</span></small></td><td class="muted" data-k="fred.DTWEXEMEGS.date" data-fmt="iso">2026-10-16</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">06</span>通胀与工资<span class="x-fold__src">数据源 BLS、BEA、达拉斯联储、亚特兰大联储</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-n" data-xs="n"><th scope="row">PPI 最终需求<button class="x-info" type="button" aria-expanded="false" aria-label="PPI 说明" title="PPI 领先 CPI">ⓘ</button><span class="x-tip" role="note">PPI 领先 CPI</span></th><td class="num"><span data-k="fred.PPIFIS.value" data-fmt="num2">159.78</span> <small>同比 <span data-k="fred.PPIFIS.yoy_pct" data-fmt="yoyp">+6.35%</span></small></td><td class="muted" data-k="fred.PPIFIS.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">进口价格指数</th><td class="num"><span data-k="fred.IR.value" data-fmt="num1">152.2</span> <small>同比 <span data-k="fred.IR.yoy_pct" data-fmt="yoyp">+8.10%</span></small></td><td class="muted" data-k="fred.IR.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">平均时薪<button class="x-info" type="button" aria-expanded="false" aria-label="平均时薪 说明" title="工资涨太快会推高服务通胀">ⓘ</button><span class="x-tip" role="note">工资涨太快会推高服务通胀</span></th><td class="num">$<span data-k="fred.CES0500000003.value" data-fmt="num2">37.81</span> <small>同比 <span data-k="fred.CES0500000003.yoy_pct" data-fmt="yoyp">+3.02%</span></small></td><td class="muted" data-k="fred.CES0500000003.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">就业成本指数 ECI</th><td class="num"><span data-k="fred.ECIALLCIV.value" data-fmt="num2">177.18</span> <small>同比 <span data-k="fred.ECIALLCIV.yoy_pct" data-fmt="yoyp">+3.38%</span></small></td><td class="muted" data-k="fred.ECIALLCIV.date" data-fmt="q">2026Q2</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">PCE 价格指数</th><td class="num"><span data-k="fred.PCEPI.value" data-fmt="num2">131.58</span> <small>同比 <span data-k="fred.PCEPI.yoy_pct" data-fmt="yoyp">+3.42%</span></small></td><td class="muted" data-k="fred.PCEPI.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-g" data-xs="PCETRIM"><th scope="row">截尾均值 PCE<button class="x-info" type="button" aria-expanded="false" aria-label="截尾均值 PCE 说明" title="剔除每月涨跌最极端的品类后计算的通胀，更能反映潜在趋势">ⓘ</button> <small>达拉斯联储，12个月</small><span class="x-tip" role="note">剔除每月涨跌最极端的品类后计算的通胀，更能反映潜在趋势</span></th><td class="num"><span data-k="fred.PCETRIM12M159SFRBDAL.value" data-fmt="pct2">2.19%</span> <small>较前值 <span data-k="fred.PCETRIM12M159SFRBDAL.chg_abs" data-fmt="pt2">−0.09pt</span></small></td><td class="muted" data-k="fred.PCETRIM12M159SFRBDAL.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;2.5% 留意 · &gt;3% 不利</small></td></tr>
+                    <tr class="x-g" data-xs="ATLWAGE"><th scope="row">亚特兰大联储工资追踪 <small>3个月均值</small></th><td class="num"><span data-k="fred.FRBATLWGT3MMAUMHWGO.value" data-fmt="pct1">3.9%</span> <small>较前值 <span data-k="fred.FRBATLWGT3MMAUMHWGO.chg_abs" data-fmt="pt1">−0.2pt</span></small></td><td class="muted" data-k="fred.FRBATLWGT3MMAUMHWGO.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;4.5% 留意</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">07</span>增长与收入<span class="x-fold__src">数据源 达拉斯联储、亚特兰大联储、芝加哥联储、BEA、人口普查局、美联储</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-g" data-xs="WEI"><th scope="row">达拉斯联储周度经济指数 WEI<button class="x-info" type="button" aria-expanded="false" aria-label="WEI 说明" title="每周估算的实时 GDP 增速">ⓘ</button><span class="x-tip" role="note">每周估算的实时 GDP 增速</span></th><td class="num" data-k="fred.WEI.value" data-fmt="num2">3.33</td><td class="muted" data-k="fred.WEI.date" data-fmt="iso">2026-10-17</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&lt;1 留意 · &lt;0 不利</small></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">实际 GDI 增速</th><td class="num" data-k="fred.A261RL1Q225SBEA.value" data-fmt="pct1">2.6%</td><td class="muted" data-k="fred.A261RL1Q225SBEA.date" data-fmt="q">2026Q2</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">个人收入</th><td class="num">$<span data-k="fred.PI.value" data-fmt="tnb">27.63 万亿</span> <small>同比 <span data-k="fred.PI.yoy_pct" data-fmt="yoyp">+4.27%</span></small></td><td class="muted" data-k="fred.PI.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">个人消费支出</th><td class="num">$<span data-k="fred.PCE.value" data-fmt="tnb">22.31 万亿</span> <small>同比 <span data-k="fred.PCE.yoy_pct" data-fmt="yoyp">+6.08%</span></small></td><td class="muted" data-k="fred.PCE.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">耐用品新订单</th><td class="num"><span data-k="fred.DGORDER.value" data-fmt="yi">3,384.6 亿美元</span> <small>同比 <span data-k="fred.DGORDER.yoy_pct" data-fmt="yoyp">+8.43%</span></small></td><td class="muted" data-k="fred.DGORDER.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">制造业新订单</th><td class="num"><span data-k="fred.AMTMNO.value" data-fmt="yi">6,634.9 亿美元</span> <small>同比 <span data-k="fred.AMTMNO.yoy_pct" data-fmt="yoyp">+8.51%</span></small></td><td class="muted" data-k="fred.AMTMNO.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">工业生产指数</th><td class="num"><span data-k="fred.INDPRO.value" data-fmt="num2">103.95</span> <small>同比 <span data-k="fred.INDPRO.yoy_pct" data-fmt="yoyp">+2.25%</span></small></td><td class="muted" data-k="fred.INDPRO.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-g" data-xs="GDPNOW" data-pct="GDPNOW"><th scope="row">亚特兰大联储 GDPNow <small>季度实时预测 · 来源 <a class="link" href="https://www.atlantafed.org/cqer/research/gdpnow" target="_blank" rel="noopener">atlantafed.org</a></small></th><td class="num"><span data-k="other.gdpnow.value" data-fmt="pctr">3.5%</span> <small>预测季度 <span data-k="other.gdpnow.quarter">2026Q3</span> · 更新 <span data-k="other.gdpnow.updated" data-fmt="iso">2026-10-20</span> · 下次 <span data-k="other.gdpnow.next_update" data-fmt="iso">2026-10-27</span> · 较前值 <span data-k="fred.GDPNOW.chg_abs" data-fmt="pt2">+1.96pt</span></small></td><td class="muted" data-k="other.gdpnow.updated" data-fmt="iso">2026-10-20</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&lt;1% 留意 · &lt;0 不利</small></td></tr>
+                    <tr class="x-g" data-xs="CFNAI"><th scope="row">CFNAI<button class="x-info" type="button" aria-expanded="false" aria-label="CFNAI 说明" title="芝加哥联储全国活动指数，0=趋势增长">ⓘ</button><span class="x-tip" role="note">芝加哥联储全国活动指数，0=趋势增长</span></th><td class="num"><span data-k="fred.CFNAI.value" data-fmt="num2">−0.04</span> <small>3月均 <span data-k="other.derived.cfnai_ma3.value" data-fmt="num2">0.04</span> · 较前值 <span data-k="fred.CFNAI.chg_abs" data-fmt="snum2">−0.12</span></small></td><td class="muted" data-k="fred.CFNAI.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>3个月均值 &lt;−0.35 留意 · &lt;−0.7 不利（芝加哥联储衰退信号）</small></td></tr>
+                    <tr class="x-a" data-xs="TCU"><th scope="row">产能利用率</th><td class="num"><span data-k="fred.TCU.value" data-fmt="pct1">76.9%</span> <small>较前值 <span data-k="fred.TCU.chg_abs" data-fmt="pt1">+0.4pt</span></small></td><td class="muted" data-k="fred.TCU.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&lt;77% 留意 · &lt;75% 不利</small></td></tr>
+                    <tr class="x-g" data-xs="CP"><th scope="row">税后企业利润</th><td class="num">$<span data-k="fred.CP.value" data-fmt="tnb">4.28 万亿</span> <small>同比 <span data-k="fred.CP.yoy_pct" data-fmt="yoyp">+26.61%</span></small></td><td class="muted" data-k="fred.CP.date" data-fmt="q">2026Q2</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>同比 &lt;0 留意</small></td></tr>
+                    <tr class="x-g" data-xs="ISRATIO"><th scope="row">库存/销售比</th><td class="num"><span data-k="fred.ISRATIO.value" data-fmt="num2">1.33</span> <small>较前值 <span data-k="fred.ISRATIO.chg_abs" data-fmt="snum2">−0.01</span></small></td><td class="muted" data-k="fred.ISRATIO.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;1.40 留意</small></td></tr>
+                    <tr class="x-a" data-xs="W875"><th scope="row">剔除转移支付实际个人收入</th><td class="num">$<span data-k="fred.W875RX1.value" data-fmt="tnb">17.05 万亿</span> <small>同比 <span data-k="fred.W875RX1.yoy_pct" data-fmt="yoyp">+0.80%</span></small></td><td class="muted" data-k="fred.W875RX1.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>同比 &lt;1% 留意 · &lt;0 不利</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">08</span>就业市场<span class="x-fold__src">数据源 BLS、Indeed、FRED</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-g" data-xs="U6"><th scope="row">U6 广义失业率</th><td class="num"><span data-k="fred.U6RATE.value" data-fmt="pct1">7.6%</span> <small>较前值 <span data-k="fred.U6RATE.chg_abs" data-fmt="pt1">−0.1pt</span> · 同比 <span data-k="fred.U6RATE.yoy_abs" data-fmt="pt1">−0.5pt</span></small></td><td class="muted" data-k="fred.U6RATE.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;8% 留意 · &gt;9% 不利</small></td></tr>
+                    <tr class="x-g" data-xs="VU" data-pct="other.derived.v_u"><th scope="row">职位空缺/失业人数比<button class="x-info" type="button" aria-expanded="false" aria-label="职位空缺/失业人数比 说明" title="每个失业者对应的职位空缺数，&lt;0.7 劳动力市场明显转弱">ⓘ</button><span class="x-tip" role="note">每个失业者对应的职位空缺数，&lt;0.7 劳动力市场明显转弱</span></th><td class="num"><span data-k="other.derived.v_u.value" data-fmt="num2">1.01</span> <small>前值 <span data-k="other.derived.v_u.prev" data-fmt="num2">1.06</span> · 一年前 <span data-k="other.derived.v_u.yago" data-fmt="num2">0.97</span></small></td><td class="muted" data-k="other.derived.v_u.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&lt;1.0 留意 · &lt;0.7 不利</small></td></tr>
+                    <tr class="x-g" data-xs="INDEED"><th scope="row">Indeed 招聘指数<button class="x-info" type="button" aria-expanded="false" aria-label="Indeed 招聘指数 说明" title="2020-02-01=100">ⓘ</button><span class="x-tip" role="note">2020-02-01=100</span></th><td class="num"><span data-k="fred.IHLIDXUS.value" data-fmt="num1">103.8</span> <small>同比 <span data-k="fred.IHLIDXUS.yoy_pct" data-fmt="yoyp">+2.77%</span></small></td><td class="muted" data-k="fred.IHLIDXUS.date" data-fmt="iso">2026-10-16</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>同比 &lt;0 留意 · &lt;−10% 不利</small></td></tr>
+                    <tr class="x-g" data-xs="NFP3"><th scope="row">非农3个月均值</th><td class="num"><span data-k="fred.PAYEMS.avg3_k" data-fmt="wan">+5.1万</span> <small>当月 <span data-k="fred.PAYEMS.mom_k" data-fmt="wan">+2.9万</span></small></td><td class="muted" data-k="fred.PAYEMS.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&lt;5万 留意 · &lt;0 不利</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">09</span>居民财务压力<span class="x-fold__src">数据源 BEA、美联储、密歇根大学</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-g" data-xs="PSAVERT"><th scope="row">个人储蓄率</th><td class="num"><span data-k="fred.PSAVERT.value" data-fmt="pct1">4.1%</span> <small>较前值 <span data-k="fred.PSAVERT.chg_abs" data-fmt="pt1">−0.5pt</span></small></td><td class="muted" data-k="fred.PSAVERT.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&lt;4% 留意 · &lt;3% 不利</small></td></tr>
+                    <tr class="x-a" data-xs="TDSP"><th scope="row">家庭偿债率</th><td class="num"><span data-k="fred.TDSP.value" data-fmt="pct2">11.11%</span> <small>较前值 <span data-k="fred.TDSP.chg_abs" data-fmt="pt2">−0.05pt</span></small></td><td class="muted" data-k="fred.TDSP.date" data-fmt="q">2026Q2</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;11% 留意 · &gt;12% 不利</small></td></tr>
+                    <tr class="x-a" data-xs="CORCC"><th scope="row">小银行信用卡违约（核销）率 <small>非前100大银行</small></th><td class="num"><span data-k="fred.CORCCOBS.value" data-fmt="pct2">7.80%</span> <small>较前值 <span data-k="fred.CORCCOBS.chg_abs" data-fmt="pt2">−0.22pt</span></small></td><td class="muted" data-k="fred.CORCCOBS.date" data-fmt="q">2026Q2</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;7% 留意 · &gt;9% 不利</small></td></tr>
+                    <tr class="x-a" data-xs="DRCC"><th scope="row">小银行信用卡拖欠率 <small>非前100大银行</small></th><td class="num"><span data-k="fred.DRCCLOBS.value" data-fmt="pct2">6.49%</span> <small>较前值 <span data-k="fred.DRCCLOBS.chg_abs" data-fmt="pt2">+0.05pt</span></small></td><td class="muted" data-k="fred.DRCCLOBS.date" data-fmt="q">2026Q2</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;6% 留意 · &gt;8% 不利</small></td></tr>
+                    <tr class="x-r" data-xs="MICH"><th scope="row">密歇根1年通胀预期</th><td class="num"><span data-k="fred.MICH.value" data-fmt="pct1">4.6%</span> <small>较前值 <span data-k="fred.MICH.chg_abs" data-fmt="pt1">+0.6pt</span></small></td><td class="muted" data-k="fred.MICH.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>不利</span> <small>&gt;3.5% 留意 · &gt;4.5% 不利</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">10</span>地区联储制造业 <small class="x-fold__src">ISM 替代</small><span class="x-fold__src">数据源 费城联储、纽约联储</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-g" data-xs="PHI"><th scope="row">费城联储制造业指数<button class="x-info" type="button" aria-expanded="false" aria-label="地区联储指数 说明" title="大于 0 表示扩张">ⓘ</button><span class="x-tip" role="note">大于 0 表示扩张</span></th><td class="num" data-k="fred.GACDFSA066MSFRBPHI.value" data-fmt="num1">20.9</td><td class="muted" data-k="fred.GACDFSA066MSFRBPHI.date" data-fmt="ym">2026-10</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;0 扩张 · &lt;−15 不利</small></td></tr>
+                    <tr class="x-g" data-xs="NY"><th scope="row">纽约联储 Empire 指数</th><td class="num" data-k="fred.GACDISA066MSFRBNY.value" data-fmt="num1">25.5</td><td class="muted" data-k="fred.GACDISA066MSFRBNY.date" data-fmt="ym">2026-10</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;0 扩张 · &lt;−15 不利</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">11</span>房地产<span class="x-fold__src">数据源 S&amp;P、FHFA、人口普查局、Freddie Mac、纽约联储</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-n" data-xs="n"><th scope="row">Case-Shiller 全国房价指数</th><td class="num"><span data-k="fred.CSUSHPINSA.value" data-fmt="num2">337.31</span> <small>同比 <span data-k="fred.CSUSHPINSA.yoy_pct" data-fmt="yoyp">+1.93%</span></small></td><td class="muted" data-k="fred.CSUSHPINSA.date" data-fmt="ym">2026-07</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">FHFA 房价指数</th><td class="num"><span data-k="fred.USSTHPI.value" data-fmt="num2">719.87</span> <small>同比 <span data-k="fred.USSTHPI.yoy_pct" data-fmt="yoyp">+3.03%</span></small></td><td class="muted" data-k="fred.USSTHPI.date" data-fmt="q">2026Q2</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-a" data-xs="MSACSR"><th scope="row">新屋库存月数</th><td class="num"><span data-k="fred.MSACSR.value" data-fmt="num1">8.5</span> 个月 <small>较前值 <span data-k="fred.MSACSR.chg_abs" data-fmt="snum1">−0.5</span></small></td><td class="muted" data-k="fred.MSACSR.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;8 留意 · &gt;9 不利</small></td></tr>
+                    <tr class="x-n" data-xs="HSN1F"><th scope="row">新屋销售 <small>千套，年化</small></th><td class="num"><span data-k="fred.HSN1F.value" data-fmt="num0">684</span> 千套 <small>同比 <span data-k="fred.HSN1F.yoy_pct" data-fmt="yoyp">−2.01%</span></small></td><td class="muted" data-k="fred.HSN1F.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-a" data-xs="MORTFF" data-pct="other.derived.mort_minus_ff"><th scope="row">房贷−联邦基金利差</th><td class="num"><span data-k="other.derived.mort_minus_ff.value" data-fmt="pt2">+3.44pt</span> <small>30Y房贷 <span data-k="other.derived.mort_minus_ff.mortgage" data-fmt="pct2">7.32%</span> − EFFR <span data-k="other.derived.mort_minus_ff.effr" data-fmt="pct2">3.88%</span></small></td><td class="muted" data-k="other.derived.mort_minus_ff.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;3pt 留意</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">12</span>银行与信贷<span class="x-fold__src">数据源 美联储 H.8、G.19</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-n" data-xs="LOANS"><th scope="row">银行贷款与租赁 <small>H.8</small></th><td class="num">$<span data-k="fred.TOTLL.value" data-fmt="tnb">14.18 万亿</span> <small>同比 <span data-k="fred.TOTLL.yoy_pct" data-fmt="yoyp">+7.97%</span></small></td><td class="muted" data-k="fred.TOTLL.date" data-fmt="iso">2026-10-07</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-g" data-xs="DEP"><th scope="row">银行存款<button class="x-info" type="button" aria-expanded="false" aria-label="银行存款 说明" title="存款持续流失是银行压力信号">ⓘ</button> <small>H.8</small><span class="x-tip" role="note">存款持续流失是银行压力信号</span></th><td class="num">$<span data-k="fred.DPSACBW027SBOG.value" data-fmt="tnb">19.77 万亿</span> <small>同比 <span data-k="fred.DPSACBW027SBOG.yoy_pct" data-fmt="yoyp">+6.89%</span></small></td><td class="muted" data-k="fred.DPSACBW027SBOG.date" data-fmt="iso">2026-10-07</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>同比 &lt;0 留意</small></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">消费信贷</th><td class="num">$<span data-k="fred.TOTALSL.value" data-fmt="tnm">5.20 万亿</span> <small>同比 <span data-k="fred.TOTALSL.yoy_pct" data-fmt="yoyp">+2.73%</span></small></td><td class="muted" data-k="fred.TOTALSL.date" data-fmt="ym">2026-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">13</span>信用分层利差<span class="x-fold__src">数据源 FRED</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-g" data-xs="BBB"><th scope="row">BBB 利差</th><td class="num"><span data-k="fred.BAMLC0A4CBBB.value" data-fmt="pct2">1.09%</span> <small>较前值 <span data-k="fred.BAMLC0A4CBBB.chg_bp" data-fmt="bp">+5bp</span></small></td><td class="muted" data-k="fred.BAMLC0A4CBBB.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;1.3% 留意 · &gt;1.6% 不利</small></td></tr>
+                    <tr class="x-r" data-xs="CCC"><th scope="row">CCC 利差<button class="x-info" type="button" aria-expanded="false" aria-label="CCC 利差 说明" title="CCC 往往最先预警违约潮">ⓘ</button><span class="x-tip" role="note">CCC 往往最先预警违约潮</span></th><td class="num"><span data-k="fred.BAMLH0A3HYC.value" data-fmt="pct2">13.07%</span> <small>较前值 <span data-k="fred.BAMLH0A3HYC.chg_bp" data-fmt="bp">+105bp</span></small></td><td class="muted" data-k="fred.BAMLH0A3HYC.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>不利</span> <small>&gt;10% 或较12月低点 ≥+200bp 留意 · &gt;15% 或 ≥+400bp 不利</small></td></tr>
+                    <tr class="x-a" data-xs="HYEY"><th scope="row">高收益债有效收益率</th><td class="num"><span data-k="fred.BAMLH0A0HYM2EY.value" data-fmt="pct2">8.17%</span> <small>较前值 <span data-k="fred.BAMLH0A0HYM2EY.chg_bp" data-fmt="bp">+4bp</span></small></td><td class="muted" data-k="fred.BAMLH0A0HYM2EY.date" data-fmt="iso">2026-10-21</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;8% 留意</small></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">14</span>实体物流<span class="x-fold__src">数据源 BTS、ATA、Cass</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-n" data-xs="n"><th scope="row">BTS 货运服务指数<button class="x-info" type="button" aria-expanded="false" aria-label="货运指标 说明" title="货运量下滑常领先经济放缓">ⓘ</button><span class="x-tip" role="note">货运量下滑常领先经济放缓</span></th><td class="num"><span data-k="fred.TSIFRGHT.value" data-fmt="num1">135.7</span> <small>同比 <span data-k="fred.TSIFRGHT.yoy_pct" data-fmt="yoyp">−2.02%</span></small></td><td class="muted" data-k="fred.TSIFRGHT.date" data-fmt="ym">2026-07</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">卡车吨位指数</th><td class="num"><span data-k="fred.TRUCKD11.value" data-fmt="num1">113.5</span> <small>同比 <span data-k="fred.TRUCKD11.yoy_pct" data-fmt="yoyp">−0.35%</span></small></td><td class="muted" data-k="fred.TRUCKD11.date" data-fmt="ym">2026-07</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">铁路货运车皮</th><td class="num"><span data-k="fred.RAILFRTCARLOADSD11.value" data-fmt="num0">992,923</span> <small>同比 <span data-k="fred.RAILFRTCARLOADSD11.yoy_pct" data-fmt="yoyp">+0.59%</span></small></td><td class="muted" data-k="fred.RAILFRTCARLOADSD11.date" data-fmt="ym">2026-07</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">Cass 发运指数</th><td class="num"><span data-k="fred.FRGSHPUSM649NCIS.value" data-fmt="num3">1.062</span> <small>同比 <span data-k="fred.FRGSHPUSM649NCIS.yoy_pct" data-fmt="yoyp">+1.92%</span></small></td><td class="muted" data-k="fred.FRGSHPUSM649NCIS.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">15</span>商品与市场比值<span class="x-fold__src">数据源 EIA、FRED、Yahoo Finance</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-a" data-xs="GAS"><th scope="row">美国普通汽油</th><td class="num">$<span data-k="fred.GASREGW.value" data-fmt="num3">4.284</span>/加仑 <small>较前值 <span data-k="fred.GASREGW.chg_pct" data-fmt="pctchg">+7.07%</span></small></td><td class="muted" data-k="fred.GASREGW.date" data-fmt="iso">2026-10-19</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>&gt;$4 压消费</small></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">铜<button class="x-info" type="button" aria-expanded="false" aria-label="铜 说明" title="铜被称为“铜博士”，反映工业需求">ⓘ</button><span class="x-tip" role="note">铜被称为“铜博士”，反映工业需求</span></th><td class="num">$<span data-k="fred.PCOPPUSDM.value" data-fmt="num0">14,473</span>/吨 <small>同比 <span data-k="fred.PCOPPUSDM.yoy_pct" data-fmt="yoyp">+44.81%</span></small></td><td class="muted" data-k="fred.PCOPPUSDM.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="CUAU" data-pct="other.ratios.copper_gold_x1000"><th scope="row">铜/金比（×1000）<button class="x-info" type="button" aria-expanded="false" aria-label="铜/金比 说明" title="铜代表增长、金代表避险；下降=增长预期走弱">ⓘ</button><span class="x-tip" role="note">铜代表增长、金代表避险；下降=增长预期走弱</span></th><td class="num"><span data-k="other.ratios.copper_gold_x1000.value" data-fmt="num2">1.62</span> <small>3周 <span data-k="other.ratios.copper_gold_x1000.chg_3w_pct" data-fmt="pctchg">+2.27%</span></small></td><td class="muted" data-k="other.ratios.copper_gold_x1000.date" data-fmt="iso">2026-10-26</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-g" data-xs="AUAG" data-pct="other.ratios.gold_silver"><th scope="row">金/银比</th><td class="num"><span data-k="other.ratios.gold_silver.value" data-fmt="num2">74.63</span> <small>3周 <span data-k="other.ratios.gold_silver.chg_3w_pct" data-fmt="pctchg">+9.28%</span></small></td><td class="muted" data-k="other.ratios.gold_silver.date" data-fmt="iso">2026-10-26</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&gt;85 留意</small></td></tr>
+                    <tr class="x-n" data-xs="XLYXLP" data-pct="other.ratios.xly_xlp"><th scope="row">XLY/XLP<button class="x-info" type="button" aria-expanded="false" aria-label="XLY/XLP 说明" title="风险偏好代理；下降=防御">ⓘ</button> <small>可选消费/必选消费</small><span class="x-tip" role="note">风险偏好代理；下降=防御</span></th><td class="num"><span data-k="other.ratios.xly_xlp.value" data-fmt="num3">1.281</span> <small>3周 <span data-k="other.ratios.xly_xlp.chg_3w_pct" data-fmt="pctchg">−6.22%</span></small></td><td class="muted" data-k="other.ratios.xly_xlp.date" data-fmt="iso">2026-10-23</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <details class="x-fold">
+              <summary><span class="x-fold__num">16</span>仓位、杠杆与资金流 <small class="x-fold__src">周/月频</small><span class="x-fold__src">数据源 NAAIM、FINRA、Cboe、ICI、CFTC、美国财政部</span></summary>
+              <div class="x-fold__body table-wrap">
+                <table>
+                  <thead><tr><th scope="col">指标</th><th scope="col">最新值</th><th scope="col">日期</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="x-n" data-xs="NAAIM"><th scope="row">NAAIM 主动经理股票敞口<button class="x-info" type="button" aria-expanded="false" aria-label="NAAIM 说明" title="专业经理人持股比例；官方数据 2026 年 8 月起改为订阅，取自公开转述">ⓘ</button><span class="x-tip" role="note">专业经理人持股比例；注：官方数据 2026 年 8 月起改为订阅，取自公开转述</span></th><td class="num"><span data-k="manual.NAAIM.value" data-fmt="num2">74.53</span> <small>前值 <span data-k="manual.NAAIM.prev" data-fmt="num2">86.76</span></small></td><td class="muted" data-k="manual.NAAIM.date" data-fmt="iso">2026-10-14</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-r" data-xs="MARGIN"><th scope="row">FINRA 保证金债务<button class="x-info" type="button" aria-expanded="false" aria-label="保证金债务 说明" title="借钱炒股越多，下跌时被迫平仓风险越大">ⓘ</button><span class="x-tip" role="note">借钱炒股越多，下跌时被迫平仓风险越大</span></th><td class="num">$<span data-k="manual.FINRA_margin.value_busd" data-fmt="tnb3">1.480 万亿</span> <small>前值 $<span data-k="manual.FINRA_margin.prev" data-fmt="tnb3">1.454 万亿</span> · 纪录 $<span data-k="manual.FINRA_margin.record" data-fmt="tnb3">1.502 万亿</span>（<span data-k="manual.FINRA_margin.record_date" data-fmt="mon">6月</span>）· 同比 <span data-k="manual.FINRA_margin.yoy_pct" data-fmt="spct1">+31.4%</span></small></td><td class="muted" data-k="manual.FINRA_margin.date" data-fmt="ym">2026-09</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>不利</span> <small>距纪录 3% 内为不利</small></td></tr>
+                    <tr class="x-g" data-xs="PCEQ"><th scope="row">Cboe 股票看跌/看涨比</th><td class="num" data-k="other.putcall.equity" data-fmt="ratio2">0.69</td><td class="muted" data-k="other.putcall.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>&lt;0.6 偏乐观 · &gt;1.0 偏恐慌</small></td></tr>
+                    <tr class="x-n" data-xs="PCI"><th scope="row">Cboe 指数看跌/看涨比</th><td class="num" data-k="other.putcall.index" data-fmt="ratio2">1.02</td><td class="muted" data-k="other.putcall.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">Cboe 总看跌/看涨比</th><td class="num" data-k="other.putcall.total" data-fmt="ratio2">0.94</td><td class="muted" data-k="other.putcall.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="ICI"><th scope="row">ICI 长期基金+ETF 资金流<button class="x-info" type="button" aria-expanded="false" aria-label="ICI 资金流 说明" title="本周共同基金巨额流出可能含份额转换，需结合 ETF 流入看">ⓘ</button><span class="x-tip" role="note">本周共同基金巨额流出可能含份额转换，需结合 ETF 流入看</span></th><td class="num"><span data-k="manual.ICI_flows.combined_busd" data-fmt="busd">−4,716.8亿美元</span> <small>共同基金 <span data-k="manual.ICI_flows.mutual_busd" data-fmt="busd">−5,249.4亿美元</span> · ETF <span data-k="manual.ICI_flows.etf_busd" data-fmt="busd">+532.6亿美元</span></small></td><td class="muted">截至 <span data-k="manual.ICI_flows.week" data-fmt="iso">2026-10-14</span> 周</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">CFTC 投机净仓位 · WTI 原油<button class="x-info" type="button" aria-expanded="false" aria-label="CFTC 净仓位 说明" title="大户押注方向，极端值常反转">ⓘ</button><span class="x-tip" role="note">大户押注方向，极端值常反转</span></th><td class="num"><span data-k="other.cot.WTI.net" data-fmt="kcontracts">+100,343 手</span> <small>前值 <span data-k="other.cot.WTI.prev" data-fmt="kcontracts">+99,060 手</span></small></td><td class="muted" data-k="other.cot.WTI.date" data-fmt="iso">2026-10-13</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">CFTC 投机净仓位 · 黄金</th><td class="num"><span data-k="other.cot.黄金.net" data-fmt="kcontracts">+207,879 手</span> <small>前值 <span data-k="other.cot.黄金.prev" data-fmt="kcontracts">+210,335 手</span></small></td><td class="muted" data-k="other.cot.黄金.date" data-fmt="iso">2026-10-13</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">CFTC 投机净仓位 · 美元指数</th><td class="num"><span data-k="other.cot.美元指数.net" data-fmt="kcontracts">+12,919 手</span> <small>前值 <span data-k="other.cot.美元指数.prev" data-fmt="kcontracts">+12,011 手</span></small></td><td class="muted" data-k="other.cot.美元指数.date" data-fmt="iso">2026-10-13</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">CFTC 投机净仓位 · 10年美债</th><td class="num"><span data-k="other.cot.10年美债.net" data-fmt="kcontracts">−988,102 手</span> <small>前值 <span data-k="other.cot.10年美债.prev" data-fmt="kcontracts">−896,481 手</span></small></td><td class="muted" data-k="other.cot.10年美债.date" data-fmt="iso">2026-10-13</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">CFTC 投机净仓位 · 标普 E-mini</th><td class="num"><span data-k="other.cot.标普E-mini.net" data-fmt="kcontracts">−140,995 手</span> <small>前值 <span data-k="other.cot.标普E-mini.prev" data-fmt="kcontracts">−154,070 手</span></small></td><td class="muted" data-k="other.cot.标普E-mini.date" data-fmt="iso">2026-10-13</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                    <tr class="x-g" data-xs="AUC10Y"><th scope="row">美债拍卖投标倍数 · 10年<button class="x-info" type="button" aria-expanded="false" aria-label="投标倍数 说明" title="倍数越低说明需求越弱">ⓘ</button><span class="x-tip" role="note">倍数越低说明需求越弱</span></th><td class="num"><span data-k="other.auctions.10Y.btc" data-fmt="ratio2">2.77</span> <small>近6次均 <span data-k="other.auctions.10Y.avg6" data-fmt="num2">2.49</span></small></td><td class="muted" data-k="other.auctions.10Y.date" data-fmt="iso">2026-10-07</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span> <small>较近6次均 ≤−0.15 留意 · ≤−0.30 不利</small></td></tr>
+                    <tr class="x-g" data-xs="AUC30Y"><th scope="row">美债拍卖投标倍数 · 30年</th><td class="num"><span data-k="other.auctions.30Y.btc" data-fmt="ratio2">2.54</span> <small>近6次均 <span data-k="other.auctions.30Y.avg6" data-fmt="num2">2.48</span></small></td><td class="muted" data-k="other.auctions.30Y.date" data-fmt="iso">2026-10-08</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span></td></tr>
+                    <tr class="x-g" data-xs="AUC20Y"><th scope="row">美债拍卖投标倍数 · 20年</th><td class="num"><span data-k="other.auctions.20Y.btc" data-fmt="ratio2">2.57</span> <small>近6次均 <span data-k="other.auctions.20Y.avg6" data-fmt="num2">2.65</span></small></td><td class="muted" data-k="other.auctions.20Y.date" data-fmt="iso">2026-09-15</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span></td></tr>
+                    <tr class="x-g" data-xs="AUC3Y"><th scope="row">美债拍卖投标倍数 · 3年</th><td class="num"><span data-k="other.auctions.3Y.btc" data-fmt="ratio2">2.62</span> <small>近6次均 <span data-k="other.auctions.3Y.avg6" data-fmt="num2">2.65</span></small></td><td class="muted" data-k="other.auctions.3Y.date" data-fmt="iso">2026-10-06</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span></td></tr>
+                    <tr class="x-g" data-xs="AUC7Y"><th scope="row">美债拍卖投标倍数 · 7年</th><td class="num"><span data-k="other.auctions.7Y.btc" data-fmt="ratio2">2.42</span> <small>近6次均 <span data-k="other.auctions.7Y.avg6" data-fmt="num2">2.49</span></small></td><td class="muted" data-k="other.auctions.7Y.date" data-fmt="iso">2026-09-24</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>有利</span></td></tr>
+                    <tr class="x-a" data-xs="AUC5Y"><th scope="row">美债拍卖投标倍数 · 5年</th><td class="num"><span data-k="other.auctions.5Y.btc" data-fmt="ratio2">2.21</span> <small>近6次均 <span data-k="other.auctions.5Y.avg6" data-fmt="num2">2.37</span></small></td><td class="muted" data-k="other.auctions.5Y.date" data-fmt="iso">2026-09-23</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>留意</span> <small>较近6次均 ≤−0.15 留意 · ≤−0.30 不利</small></td></tr>
+                    <tr class="x-n" data-xs="n"><th scope="row">FINRA 场外卖空量占比<button class="x-info" type="button" aria-expanded="false" aria-label="场外卖空量 说明" title="短线做空活跃度，非持仓">ⓘ</button><span class="x-tip" role="note">短线做空活跃度，非持仓</span></th><td class="num" data-k="other.finra_short.short_pct" data-fmt="pct2">50.05%</td><td class="muted" data-k="other.finra_short.date" data-fmt="iso">2026-10-22</td><td><i class="x-dot" aria-hidden="true"></i><span data-lbl>中性</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+          <p class="fineprint">扩展指标大多为周/月/季度发布，日期以各自最新发布为准；不构成投资建议。</p>
+        </section>
+
+        <section class="section" id="takeaways" data-nav="结论">
+          <div class="head"><h2>关键结论</h2><p class="x-atag" data-atag hidden><span class="x-chip x-n"></span></p></div>
+          <details class="x-fold x-sec">
+            <summary>展开关键结论</summary>
+            <div class="x-fold__body"><ol class="x-points" id="x-conclusions"></ol></div>
+          </details>
+        </section>
+
+        <section class="section" id="markets" data-nav="市场">
+          <div class="head">
+            <p class="head__eyebrow">01 · 市场：股市、美元、商品</p>
+            <h2 data-h="mkt">—</h2>
+            <p class="head__sub" data-h="mkt-sub">—</p>
+          </div>
+          <details class="x-fold x-sec">
+            <summary>展开图表<span class="x-fold__src">标普500 · VIX · 美元 · WTI</span></summary>
+            <div class="x-fold__body">
+          <div class="x-grid">
+            <figure class="chart">
+              <figcaption class="chart__cap">标普500 · —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-spx" role="img" aria-label="标普500 每日收盘"></canvas></div>
+            </figure>
+            <figure class="chart">
+              <figcaption class="chart__cap">VIX · —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-vix" role="img" aria-label="VIX 每日"></canvas></div>
+            </figure>
+            <figure class="chart">
+              <figcaption class="chart__cap">美元广义指数 · —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-usd" role="img" aria-label="美元广义指数 每日"></canvas></div>
+            </figure>
+            <figure class="chart">
+              <figcaption class="chart__cap">WTI 原油 · —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-wti" role="img" aria-label="WTI 原油 每日，美元/桶"></canvas></div>
+            </figure>
+          </div>
+          <p class="fineprint">DXY 原始数据由 ICE 授权，本页改用美联储广义美元指数。</p>
+            </div>
+          </details>
+        </section>
+
+        <section class="section" id="rates" data-nav="利率">
+          <div class="head">
+            <p class="head__eyebrow">02 · 利率：美债、短端、房贷</p>
+            <h2 data-h="rates">—</h2>
+            <p class="head__sub" data-h="rates-sub">—</p>
+          </div>
+          <details class="x-fold x-sec">
+            <summary>展开图表<span class="x-fold__src">美债收益率 · 房贷 · 利差</span></summary>
+            <div class="x-fold__body">
+          <div class="x-grid">
+            <figure class="chart">
+              <figcaption class="chart__cap">10年期 — · 2年期 —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-ust" role="img" aria-label="10年期与2年期美债每日收益率"></canvas></div>
+            </figure>
+            <figure class="chart">
+              <figcaption class="chart__cap">30年期房贷 · —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-mtg" role="img" aria-label="30年期房贷利率 每周"></canvas></div>
+            </figure>
+            <div class="breakdown">
+              <dl>
+                <div class="row"><dt>10Y–3M 利差 <small><span data-k="fred.T10Y3M.date" data-fmt="md">—</span>；<span data-k="fred.T10Y3M.prev_date" data-fmt="md">—</span> 为 <span data-k="fred.T10Y3M.prev" data-fmt="pct2">—</span>，<span data-k="fred.T10Y3M.chg_bp" data-fmt="bp">—</span></small><span class="x-note">长短端利差，倒挂(&lt;0)历来领先衰退 6–18 个月</span></dt><dd data-k="fred.T10Y3M.value" data-fmt="pct2">—</dd></div>
+                <div class="row"><dt>EFFR <small><span data-k="fred.EFFR.date" data-fmt="md">—</span>；较 <span data-k="fred.EFFR.prev_date" data-fmt="md">—</span> <span data-k="fred.EFFR.chg_bp" data-fmt="bp">—</span></small><span class="x-note">联邦基金实际成交利率，即美联储政策利率</span></dt><dd data-k="fred.EFFR.value" data-fmt="pct2">—</dd></div>
+                <div class="row"><dt>10年盈亏平衡通胀 <small><span data-k="fred.T10YIE.date" data-fmt="md">—</span>；<span data-k="fred.T10YIE.prev_date" data-fmt="md">—</span> 为 <span data-k="fred.T10YIE.prev" data-fmt="pct2">—</span></small><span class="x-note">名义与 TIPS 收益率之差，市场的通胀预期</span></dt><dd data-k="fred.T10YIE.value" data-fmt="pct2">—</dd></div>
+              </dl>
+            </div>
+          </div>
+            </div>
+          </details>
+        </section>
+
+        <section class="section" id="economy" data-nav="实体经济">
+          <div class="head">
+            <p class="head__eyebrow">03 · 实体经济：通胀、就业、增长与消费</p>
+            <h2 data-h="econ">—</h2>
+            <p class="head__sub" data-h="econ-sub">—</p>
+          </div>
+          <details class="x-fold x-sec">
+            <summary>展开图表<span class="x-fold__src">失业率 · 初请 · GDP · CPI · 消费</span></summary>
+            <div class="x-fold__body">
+          <div class="x-grid">
+            <figure class="chart">
+              <figcaption class="chart__cap">失业率 · —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-unemp" role="img" aria-label="失业率 每月"></canvas></div>
+            </figure>
+            <figure class="chart">
+              <figcaption class="chart__cap">初请失业金 · —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-claims" role="img" aria-label="初请失业金 每周"></canvas></div>
+            </figure>
+            <figure class="chart">
+              <figcaption class="chart__cap">实际 GDP · —<small>—</small></figcaption>
+              <div class="x-spark"><canvas id="c-gdp" role="img" aria-label="实际 GDP 环比年化增速 每季"></canvas></div>
+            </figure>
+          </div>
+          <div class="pair">
+            <div class="breakdown">
+              <dl>
+                <div class="row"><dt>CPI 环比 <small data-k="fred.CPIAUCSL.date" data-fmt="mon">—</small></dt><dd data-k="fred.CPIAUCSL.chg_pct" data-fmt="pctchg">—</dd></div>
+                <div class="row"><dt>CPI 指数 <small><span data-k="fred.CPIAUCSL.prev_date" data-fmt="mon">—</span> <span data-k="fred.CPIAUCSL.prev" data-fmt="num3">—</span> → <span data-k="fred.CPIAUCSL.date" data-fmt="mon">—</span></small></dt><dd data-k="fred.CPIAUCSL.value" data-fmt="num3">—</dd></div>
+              </dl>
+            </div>
+            <div class="breakdown">
+              <dl>
+                <div class="row"><dt>零售销售 <small><span data-k="fred.RSAFS.date" data-fmt="mon">—</span>，<span data-k="fred.RSAFS.prev_date" data-fmt="mon">—</span> $<span data-k="fred.RSAFS.prev" data-fmt="bnm">—</span>，同比 <span data-k="fred.RSAFS.yoy_pct" data-fmt="pctchg">—</span></small></dt><dd>$<span data-k="fred.RSAFS.value" data-fmt="bnm">—</span></dd></div>
+                <div class="row"><dt>密歇根消费者信心 <small><span data-k="fred.UMCSENT.date" data-fmt="ym">—</span>，<span data-k="fred.UMCSENT.prev_date" data-fmt="mon">—</span> <span data-k="fred.UMCSENT.prev" data-fmt="num1">—</span>，<span data-k="fred.UMCSENT.chg_pct" data-fmt="pctchg">—</span></small></dt><dd data-k="fred.UMCSENT.value" data-fmt="num1">—</dd></div>
+                <div class="row"><dt>房屋开工年化 <small><span data-k="fred.HOUST.date" data-fmt="mon">—</span>，<span data-k="fred.HOUST.prev_date" data-fmt="mon">—</span> <span data-k="fred.HOUST.prev" data-fmt="mk">—</span>，<span data-k="fred.HOUST.chg_pct" data-fmt="pctchg">—</span></small></dt><dd data-k="fred.HOUST.value" data-fmt="mk">—</dd></div>
+              </dl>
+            </div>
+          </div>
+            </div>
+          </details>
+        </section>
+
+        <section class="section" id="credit" data-nav="信贷">
+          <div class="head">
+            <p class="head__eyebrow">04 · 信贷与流动性</p>
+            <h2 data-h="credit">—</h2>
+            <p class="head__sub" data-h="credit-sub">—</p>
+          </div>
+          <details class="x-fold x-sec">
+            <summary>展开明细<span class="x-fold__src">M2 · 准备金 · TGA · 逆回购</span></summary>
+            <div class="x-fold__body">
+          <div class="pair">
+            <div class="breakdown">
+              <dl>
+                <div class="row"><dt>M2 <small><span data-k="fred.M2SL.date" data-fmt="ym">—</span>，环比 <span data-k="fred.M2SL.chg_pct" data-fmt="pctchg">—</span>，同比 <span data-k="fred.M2SL.yoy_pct" data-fmt="pctchg">—</span>（前值 <span data-k="fred.M2SL.yoy_prev_pct" data-fmt="pct2">—</span>）</small><span class="x-note">广义货币供应量，增速过快会推升通胀</span></dt><dd>$<span data-k="fred.M2SL.value" data-fmt="tb2">—</span></dd></div>
+              </dl>
+            </div>
+            <div class="breakdown">
+              <dl>
+                <div class="row"><dt>银行准备金 <small><span data-k="fred.WRESBAL.date" data-fmt="md">—</span>；<span data-k="fred.WRESBAL.prev_date" data-fmt="md">—</span> $<span data-k="fred.WRESBAL.prev" data-fmt="tm3">—</span>，<span data-k="fred.WRESBAL.chg_pct" data-fmt="pctchg">—</span></small><span class="x-note">银行存在联储的现金，过低会引发资金紧张</span></dt><dd>$<span data-k="fred.WRESBAL.value" data-fmt="tm3">—</span></dd></div>
+                <div class="row"><dt>TGA 财政部账户 <small><span data-k="fred.WTREGEN.date" data-fmt="md">—</span>；<span data-k="fred.WTREGEN.prev_date" data-fmt="md">—</span> $<span data-k="fred.WTREGEN.prev" data-fmt="bm0">—</span>，<span data-k="fred.WTREGEN.chg_pct" data-fmt="pctchg">—</span></small><span class="x-note">财政部在联储的现金，升高会抽走市场流动性</span></dt><dd>$<span data-k="fred.WTREGEN.value" data-fmt="bm0">—</span></dd></div>
+                <div class="row"><dt>ON RRP 逆回购 <small><span data-k="fred.RRPONTSYD.date" data-fmt="md">—</span>；<span data-k="fred.RRPONTSYD.prev_date" data-fmt="md">—</span> $<span data-k="fred.RRPONTSYD.prev" data-fmt="b2">—</span>，<span data-k="fred.RRPONTSYD.chg_pct" data-fmt="spct1">—</span></small><span class="x-note">货币基金存放联储的闲钱，接近零说明流动性缓冲已耗尽</span></dt><dd>$<span data-k="fred.RRPONTSYD.value" data-fmt="b2">—</span></dd></div>
+              </dl>
+            </div>
+          </div>
+            </div>
+          </details>
+        </section>
+      </main>
+      <footer class="foot">
+        <p>数据来源：FRED、纽约联储。每个美股交易日次日新加坡时间 9 点自动更新；数值以官方发布为准。</p>
+        <nav aria-label="返回各部分" data-auto></nav>
+        <a class="badge" href="https://hark.com/" target="_blank" rel="noopener"
+          ><span class="hark-mark"></span><span>built by hark</span></a
+        >
+      </footer>
+    </div>
+
+    <!-- Chart series come only from dash.json sparks (window.dashSeries); no hand-typed fallback values. -->
+    <script type="application/json" id="d-series">{}</script>
+    <!-- DAILY UPDATE: replace only this block with new dash.json --><script id="dash-data" type="application/json" src="dash.json"></script>
+    <script>
+      // Binder: fills [data-k] text, [data-sign] arrows/colors and [data-st] status from dash-data.
+      (function () {
+        var DASH = {};
+        try { DASH = JSON.parse(document.getElementById("dash-data").textContent) || {}; } catch (e) {}
+        window.DASH = DASH;
+        var M = "\u2212";
+        var get = function (p) { return p.split(".").reduce(function (o, k) { return o == null ? undefined : o[k]; }, DASH); };
+        var n = function (v, dp) { return Number(v).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp }); };
+        var sg = function (v, dp) { var r = Math.abs(v).toFixed(dp); return (Number(r) === 0 ? "" : v > 0 ? "+" : M) + n(r, dp); };
+        // Accepts YYYY-MM-DD, YYYY-MM and MM/DD/YYYY (Cboe); always returns [Y, M, D].
+        var ymd = function (v) { var p = String(v).split(/[-/]/); return p.length === 3 && p[0].length < 4 ? [p[2], p[0], p[1]] : p; };
+        var pad = function (x) { return ("0" + x).slice(-2); };
+        var F = {
+          num0: function (v) { return n(v, 0); }, num1: function (v) { return n(v, 1); }, num2: function (v) { return n(v, 2); }, num4: function (v) { return n(v, 4); },
+          pct1: function (v) { return n(v, 1) + "%"; }, pct2: function (v) { return n(v, 2) + "%"; },
+          bp: function (v) { return sg(v, 0) + "bp"; }, pctchg: function (v) { return sg(v, 2) + "%"; },
+          pt1: function (v) { return sg(v, 1) + "pt"; }, pt2: function (v) { return sg(v, 2) + "pt"; }, ptbp: function (v) { return sg(v / 100, 1) + "pt"; },
+          sk: function (v) { return sg(v, 0) + "k"; }, k: function (v) { return n(v / 1000, 0) + "千"; }, tn: function (v) { return n(v / 1e6, 2) + "万亿"; },
+          date: function (v) { return String(v); },
+          md: function (v) { var p = ymd(v); return +p[1] + "/" + p[2]; },
+          mon: function (v) { return +ymd(v)[1] + "月"; },
+          q: function (v) { var p = ymd(v); return p[0] + "Q" + (Math.floor((+p[1] - 1) / 3) + 1); },
+          iso: function (v) { var p = ymd(v); return p[0] + "-" + pad(p[1]) + (p[2] ? "-" + pad(p[2]) : ""); },
+          ym: function (v) { var p = ymd(v); return p[0] + "-" + pad(p[1]); },
+          num3: function (v) { return n(v, 3); }, ratio2: function (v) { return n(v, 2); },
+          yoyp: function (v) { return sg(v, 2) + "%"; }, spct1: function (v) { return sg(v, 1) + "%"; },
+          busd: function (v) { return sg(v * 10, 1) + "亿美元"; }, kcontracts: function (v) { return sg(v, 0) + " 手"; },
+          yi: function (v) { return n(v / 100, 1) + " 亿美元"; }, tnb: function (v) { return n(v / 1000, 2) + " 万亿"; },
+          tnb3: function (v) { return n(v / 1000, 3) + " 万亿"; }, tnm: function (v) { return n(v / 1e6, 2) + " 万亿"; },
+          wan: function (v) { return sg(v / 10, 1) + "万"; },
+          pctl: function (v) { return n(v, 0) + "%"; }, pctr: function (v) { return Math.round(v * 100) / 100 + "%"; },
+          snum1: function (v) { return sg(v, 1); }, snum2: function (v) { return sg(v, 2); },
+          // Unit conversions for the section breakdowns (FRED units: millions, thousands, billions).
+          bnm: function (v) { return n(v / 1000, 1) + "B"; }, mk: function (v) { return n(v / 1000, 3) + "M"; },
+          tb2: function (v) { return n(v / 1000, 2) + "T"; }, tm3: function (v) { return n(v / 1e6, 3) + "T"; },
+          bm0: function (v) { return n(v / 1000, 0) + "B"; }, b2: function (v) { return n(v, 2) + "B"; },
+        };
+        // Derived fields for monthly rows: previous month's MoM, and its change (YoY prev/change come from the data).
+        Object.keys(DASH.fred || {}).forEach(function (id) {
+          try {
+            var e = DASH.fred[id], s = e.spark, d = e.spark_dates || [], i = d.indexOf(e.prev_date);
+            if (s && e.date && e.value != null) {
+              var j = d.length ? d.indexOf((+String(e.date).slice(0, 4) - 1) + String(e.date).slice(4)) : -1;
+              // No spark_dates: a monthly/quarterly spark ending at the latest value still gives the year-ago point by position.
+              if (!d.length && s[s.length - 1] === e.value) { var back = e.freq === "m" ? 12 : e.freq === "q" ? 4 : 0; if (back && s.length > back) j = s.length - 1 - back; }
+              if (j >= 0 && s[j] != null) e.yoy_abs = e.value - s[j];
+            }
+            if (!s || i < 1) return;
+            if (e.mom_k != null) { e.mom_k_prev = s[i] - s[i - 1]; e.mom_k_chg = e.mom_k - e.mom_k_prev; }
+            if (e.mom_pct != null) { e.mom_pct_prev = (s[i] / s[i - 1] - 1) * 100; e.mom_pct_chg = e.mom_pct - e.mom_pct_prev; }
+          } catch (err) {}
+        });
+        // Status thresholds: [field, "+" higher is worse | "-" lower is worse, amber, red, "=" inclusive (≥/≤) | default strict (>/<)]; "n" = neutral. "@lvl" = headline tile.
+        var TH = {
+          // A field starting "other." is read as a full path (SP500: 52-week drawdown; ICSA: 4-week avg vs 52-week low; RSAFS: CPI-deflated YoY).
+          SP500: ["other.valuation.sp500_dd_52w.value", "-", -5, -10], VIXCLS: ["value", "+", 20, 30], "VIXCLS@lvl": ["value", "+", 20, 30],
+          DTWEXBGS: "n", DEXJPUS: "n", DEXUSEU: "n", DGS2: "n", SOFR: "n", WALCL: "n",
+          DCOILWTICO: ["value", "+", 85, 100, "="], DCOILBRENTEU: ["value", "+", 90, 105, "="], DHHNGSP: ["value", "+", 4.5, 6],
+          DGS10: ["value", "+", 4.5, 5.5], "DGS10@lvl": ["value", "+", 4.5, 5.5], DGS30: ["value", "+", 5.0, 6.0],
+          T10Y2Y: ["value", "-", 0.5, 0, "="], DFII10: ["value", "+", 2.5, 3.0], T10YIE: ["value", "+", 2.5, 3, "="], MORTGAGE30US: ["value", "+", 6.5, 7, "="],
+          CPIAUCSL: ["yoy_pct", "+", 2.5, 3.5, "="], CPILFESL: ["yoy_pct", "+", 2.5, 3.5, "="], PCEPILFE: ["yoy_pct", "+", 2.5, 3.5, "="],
+          UNRATE: ["rise_from_12m_low", "+", 0.3, 0.5, "="], "UNRATE@lvl": ["rise_from_12m_low", "+", 0.3, 0.5, "="],
+          PAYEMS: ["avg3_k", "-", 50, 0], ICSA: ["other.derived.icsa_4w.vs_low_pct", "+", 10, 20, "="],
+          A191RL1Q225SBEA: ["value", "-", 1.5, 0], RSAFS: ["other.derived.rsafs_real_yoy.value", "-", 1, 0],
+          BAMLH0A0HYM2: ["value", "+", 4.0, 5.5], "BAMLH0A0HYM2@lvl": ["value", "+", 4.0, 5.5], BAMLC0A0CM: ["value", "+", 1.3, 1.6],
+        };
+        var LBL = { r: "不利", a: "需留意", g: "有利", n: "中性" };
+        var status = function (key) {
+          var t = TH[key]; if (t === "n") return "n"; if (!t) return;
+          var v = get(t[0].indexOf("other.") === 0 ? t[0] : "fred." + key.split("@")[0] + "." + t[0]); if (v == null || isNaN(v)) return;
+          var k = t[1] === "+" ? 1 : -1, x = Math.round(v * k * 1e6) / 1e6;
+          var past = function (lim) { return t[4] === "=" ? x >= lim * k : x > lim * k; };
+          return past(t[3]) ? "r" : past(t[2]) ? "a" : "g";
+        };
+        var swap = function (el, c) { ["x-r", "x-a", "x-g", "x-n"].forEach(function (x) { el.classList.remove(x); }); el.classList.add(c); };
+        var O = DASH.other = DASH.other || {};
+        // GDPNow: other.gdpnow first, else fall back to fred.GDPNOW.
+        try { var gn = (DASH.fred || {}).GDPNOW; if (!O.gdpnow && gn && gn.value != null) O.gdpnow = { value: Math.round(gn.value * 100) / 100, quarter: F.q(gn.date) }; } catch (e) {}
+        // Latest Treasury auction across tenors, for the 重点观察 card.
+        try {
+          var au = O.auctions || {}, best = null;
+          Object.keys(au).forEach(function (t) { var a = au[t]; if (a && a.btc != null && (!best || F.iso(a.date) > F.iso(best.date))) best = Object.assign({ tenor: t }, a); });
+          if (best) O.auction_latest = best;
+        } catch (e) {}
+        document.querySelectorAll("[data-k]").forEach(function (el) {
+          try { var v = get(el.dataset.k), f = F[el.dataset.fmt] || F.date; el.textContent = v == null || v === "" ? "—" : f(v); } catch (e) { el.textContent = "—"; }
+        });
+        document.querySelectorAll("[data-sign]").forEach(function (el) {
+          try {
+            var v = Number(get(el.dataset.sign)); if (get(el.dataset.sign) == null || isNaN(v)) return;
+            var s = v > 0 ? 1 : v < 0 ? -1 : 0, arr = el.classList.contains("x-arr") ? el : el.querySelector("[data-arr]");
+            if (arr) arr.textContent = s > 0 ? "▲" : s < 0 ? "▼" : "—";
+            if (arr === el) el.setAttribute("aria-label", s > 0 ? "上升" : s < 0 ? "下降" : "持平");
+            if (el.dataset.good) swap(el, s === 0 ? "x-n" : (s > 0) === (el.dataset.good === "up") ? "x-g" : "x-r");
+          } catch (e) {}
+        });
+        document.querySelectorAll("[data-st]").forEach(function (el) {
+          try {
+            var s = status(el.dataset.st); if (!s) return; swap(el, "x-" + s);
+            var dot = el.querySelector('.x-dot[role="img"]'); if (dot) dot.setAttribute("aria-label", LBL[s]);
+          } catch (e) {}
+        });
+        // Extended indicators: status per row ([data-xs]); rows without a rule stay grey 中性.
+        var X = function (p) { var v = get(p); return v == null || v === "" || isNaN(v) ? null : Number(v); };
+        var hi = function (p, a, r) { var v = X(p); if (v == null) return; return r != null && v > r ? "r" : v > a ? "a" : "g"; };
+        var lo = function (p, a, r) { var v = X(p); if (v == null) return; return r != null && v < r ? "r" : v < a ? "a" : "g"; };
+        var XS = {
+          VVIX: function () { return hi("other.cboe.VVIX.value", 110, 125); },
+          SKEW: function () { return hi("other.cboe.SKEW.value", 155, 165); },
+          MOVE: function () { return hi("other.move.value", 110, 120) || "-"; },
+          OVX: function () { return hi("fred.OVXCLS.value", 45, 60); },
+          DFII5: function () { return hi("fred.DFII5.value", 2.5); },
+          DFII30: function () { return hi("fred.DFII30.value", 2.5); },
+          T5YIFR: function () { var v = X("fred.T5YIFR.value"); if (v == null) return; return v > 2.7 ? "a" : v >= 2 && v <= 2.5 ? "g" : "n"; },
+          CCC: function () { var v = X("fred.BAMLH0A3HYC.value"), b = X("crisis.detail.BAMLH0A3HYC_vs_12mLow_bp.num"); if (v == null && b == null) return; return v > 15 || b >= 400 ? "r" : v > 10 || b >= 200 ? "a" : "g"; },
+          BBB: function () { return hi("fred.BAMLC0A4CBBB.value", 1.3, 1.6); },
+          HYEY: function () { return hi("fred.BAMLH0A0HYM2EY.value", 8); },
+          GAS: function () { return hi("fred.GASREGW.value", 4); },
+          PCEQ: function () { var v = X("other.putcall.equity"); if (v == null) return; return v < 0.6 || v > 1 ? "a" : "g"; },
+          MARGIN: function () { var v = X("manual.FINRA_margin.value_busd"), r = X("manual.FINRA_margin.record"); if (v == null || r == null) return; return v >= r * 0.97 ? "r" : v >= r * 0.9 ? "a" : "n"; },
+          VIX9D: function () { var a = X("other.cboe.VIX9D.value"), b = X("fred.VIXCLS.value"); if (a == null || b == null) return; return a > b ? "a" : "g"; },
+          VIX1D: function () { var v = X("other.cboe.VIX1D.value"); if (v == null) return; return v > 25 ? "a" : "n"; },
+          GVZ: function () { return hi("fred.GVZCLS.value", 25, 35); },
+          NAAIM: function () { var v = X("manual.NAAIM.value"); if (v == null) return; return v > 90 || v < 30 ? "a" : "g"; },
+          PCI: function () { return hi("other.putcall.index", 1.3); },
+          ICI: function () { var v = X("manual.ICI_flows.combined_busd"); if (v == null) return; return v < -50 ? "a" : "n"; },
+          LOANS: function () { return lo("fred.TOTLL.yoy_pct", 0); },
+          PHI: function () { return lo("fred.GACDFSA066MSFRBPHI.value", 0, -15); },
+          NY: function () { return lo("fred.GACDISA066MSFRBNY.value", 0, -15); },
+          WEI: function () { return lo("fred.WEI.value", 1, 0); },
+          DEP: function () { return lo("fred.DPSACBW027SBOG.yoy_pct", 0); },
+        };
+        var fund = function (p) { var v = X(p), e = X("fred.EFFR.value"); if (v == null || e == null) return; return v - e > 0.10 ? "a" : "g"; };
+        XS.OBFR = function () { return fund("fred.OBFR.value"); };
+        XS.TGCR = function () { return fund("other.nyfed.TGCR.rate"); };
+        XS.BGCR = function () { return fund("other.nyfed.BGCR.rate"); };
+        ["3Y", "5Y", "7Y", "10Y", "20Y", "30Y"].forEach(function (t) { XS["AUC" + t] = function () { var d = X("other.auctions." + t + ".vs_avg6"); if (d == null) return; d = Math.round(d * 1e6) / 1e6; return d <= -0.30 ? "r" : d <= -0.15 ? "a" : "g"; }; });
+        // New display-only rows: missing data returns "-" (grey, label "—").
+        var Q = function (s) { return s || "-"; };
+        var nz = function (p) { return X(p) == null ? "-" : "n"; };
+        var NEW = {
+          CAPE: function () { return Q(hi("other.valuation.cape.value", 28, 35)); },
+          BUFFETT: function () { return Q(hi("other.valuation.buffett.value", 150, 200)); },
+          ERP: function () { return Q(lo("other.valuation.erp.value", 1.5, 0)); },
+          DD52: function () { return Q(lo("other.valuation.sp500_dd_52w.value", -5, -10)); },
+          PETTM: function () { return nz("other.valuation.pe_ttm.value"); },
+          GDPNOW: function () { return Q(lo("other.gdpnow.value", 1, 0)); },
+          RRP: function () { return nz("fred.RRPONTSYD.value"); },
+          RESV: function () { return Q(lo("other.derived.reserves_gdp.value_pct", 9.5, 8)); },
+          TGA: function () { var c = X("other.derived.tga_4w.chg_b"), r = X("other.derived.reserves_gdp.value_pct"); if (c == null || r == null) return "-"; return c > 200 && r < 9.5 ? "a" : "g"; },
+          SOFRIORB: function () { return Q(hi("other.derived.sofr_minus_iorb.avg5_bp", 5, 15)); },
+          AUCL: function () { var d = X("other.auction_latest.vs_avg6"); if (d == null) return "-"; d = Math.round(d * 1e6) / 1e6; return d <= -0.30 ? "r" : d <= -0.15 ? "a" : "g"; },
+          CFNAI: function () { return Q(lo("other.derived.cfnai_ma3.value", -0.35, -0.7)); },
+          TCU: function () { return Q(lo("fred.TCU.value", 77, 75)); },
+          CP: function () { return Q(lo("fred.CP.yoy_pct", 0)); },
+          ISRATIO: function () { return Q(hi("fred.ISRATIO.value", 1.40)); },
+          W875: function () { return Q(lo("fred.W875RX1.yoy_pct", 1, 0)); },
+          PSAVERT: function () { return Q(lo("fred.PSAVERT.value", 4, 3)); },
+          TDSP: function () { return Q(hi("fred.TDSP.value", 11, 12)); },
+          CORCC: function () { return Q(hi("fred.CORCCOBS.value", 7, 9)); },
+          DRCC: function () { return Q(hi("fred.DRCCLOBS.value", 6, 8)); },
+          MICH: function () { return Q(hi("fred.MICH.value", 3.5, 4.5)); },
+          U6: function () { return Q(hi("fred.U6RATE.value", 8, 9)); },
+          VU: function () { return Q(lo("other.derived.v_u.value", 1.0, 0.7)); },
+          INDEED: function () { return Q(lo("fred.IHLIDXUS.yoy_pct", 0, -10)); },
+          NFP3: function () { return Q(lo("fred.PAYEMS.avg3_k", 50, 0)); },
+          MSACSR: function () { return Q(hi("fred.MSACSR.value", 8, 9)); },
+          HSN1F: function () { return nz("fred.HSN1F.value"); },
+          MORTFF: function () { return Q(hi("other.derived.mort_minus_ff.value", 3)); },
+          PCETRIM: function () { return Q(hi("fred.PCETRIM12M159SFRBDAL.value", 2.5, 3)); },
+          ATLWAGE: function () { return Q(hi("fred.FRBATLWGT3MMAUMHWGO.value", 4.5)); },
+          CUAU: function () { return nz("other.ratios.copper_gold_x1000.value"); },
+          AUAG: function () { return Q(hi("other.ratios.gold_silver.value", 85)); },
+          XLYXLP: function () { return nz("other.ratios.xly_xlp.value"); },
+        };
+        Object.keys(NEW).forEach(function (k) { XS[k] = NEW[k]; });
+        var XL = { r: "不利", a: "留意", g: "有利", n: "中性" };
+        // Custom label text per row, overriding XL when it returns a string.
+        var XLC = { RRP: function () { var v = X("fred.RRPONTSYD.value"); return v != null && v < 50 ? "缓冲已耗尽" : null; } };
+        document.querySelectorAll("[data-xs]").forEach(function (el) {
+          try {
+            var f = XS[el.dataset.xs], s = f ? f() : "n"; if (!s) return;
+            var miss = s === "-"; if (miss) s = "n"; swap(el, "x-" + s);
+            var cl = !miss && XLC[el.dataset.xs] ? XLC[el.dataset.xs]() : null;
+            var lb = el.querySelector("[data-lbl]"); if (lb) lb.textContent = miss ? "—" : cl || XL[s];
+          } catch (e) {}
+        });
+        // Per row: 10-year percentile bar under the value, and a freshness chip by the name.
+        // data-pct = a fred id, a dotted path into DASH (other.*), or "-" to opt out; default is the row's first fred.* key.
+        var FRESH = { "new": ["x-b", "本周新发布"], late: ["x-a", "滞后"], stale: ["x-n", "沿用旧值"] };
+        document.querySelectorAll("#overview tbody tr, #extended tbody tr, [data-pct]").forEach(function (el) {
+          try {
+            var id = el.dataset.pct; if (id === "-") return;
+            if (!id) { var kel = el.querySelector('[data-k^="fred."]'); if (!kel) return; id = kel.dataset.k.split(".")[1]; }
+            var e = id.indexOf(".") > 0 ? get(id) : (DASH.fred || {})[id]; if (!e) return;
+            var fr = FRESH[e.fresh], nameEl = el.querySelector('th[scope="row"], .x-tile__label');
+            if (fr && nameEl && !nameEl.querySelector(".x-fresh")) {
+              var ch = document.createElement("span"); ch.className = "x-chip x-fresh " + fr[0]; ch.textContent = fr[1];
+              nameEl.insertBefore(ch, nameEl.querySelector(".x-info, small") || null);
+            }
+            var pv = e.pctile_10y; if (pv == null || pv === "" || isNaN(pv)) return;
+            var pc = Math.max(0, Math.min(100, Number(pv))), p = n(pv, 0) + "%", hy = parseInt(e.hist_years, 10);
+            var z = e.z_10y == null || e.z_10y === "" || isNaN(e.z_10y) ? "" : " · " + sg(Number(e.z_10y), 1) + "σ";
+            // Label = real history length: "{hist_years}年分位", capped at 10.
+            var txt = (hy > 0 && hy < 10 ? hy : 10) + "年分位 " + p + z;
+            if (e.hist_basis === "yoy") txt += "(同比)";
+            var host = el.querySelector("td") || el, old = host.querySelector(".x-pctl"); if (old) old.remove();
+            var s = document.createElement("small"); s.className = "x-pctl";
+            s.innerHTML = '<span class="x-pctl__bar" aria-hidden="true"><b></b><i></i></span><span></span>';
+            s.querySelector("b").style.width = pc + "%"; s.querySelector("i").style.left = pc + "%"; s.lastChild.textContent = txt;
+            host.appendChild(s);
+          } catch (err) {}
+        });
+        // Mini charts: rebuild d-series entries from DASH.fred sparks when present.
+        window.dashSeries = function (S) {
+          // spark_dates is optional: without it the chart gets blank x labels.
+          var lab = function (e) { var f = e.freq === "m" ? F.mon : e.freq === "q" ? F.q : F.md; return e.spark_dates ? e.spark_dates.map(f) : e.spark.map(function () { return ""; }); };
+          var ok = function (e) { return e && e.spark && e.spark.length && (!e.spark_dates || e.spark.length === e.spark_dates.length); };
+          var fr = DASH.fred || {}, map = { spx: "SP500", vix: "VIXCLS", usd: "DTWEXBGS", wti: "DCOILWTICO", mtg: "MORTGAGE30US", unemp: "UNRATE", claims: "ICSA", gdp: "A191RL1Q225SBEA" };
+          Object.keys(map).forEach(function (k) {
+            try { var e = fr[map[k]]; if (!ok(e)) return; S[k] = { labels: lab(e), values: e.spark.map(function (v) { return k === "claims" ? v / 1000 : v; }) }; } catch (err) {}
+          });
+          try { var a = fr.DGS10, b = fr.DGS2; if (ok(a) && ok(b) && a.spark.length === b.spark.length) S.ust = { labels: lab(a), y10: a.spark, y2: b.spark }; } catch (err) {}
+          return S;
+        };
+      })();
+    </script>
+    <script>
+      // Analysis + crisis renderer: DASH.analysis when present, else ANALYSIS_DEFAULT; DASH.crisis drives the warning section.
+      (function () {
+        var D = window.DASH || {};
+        // Fallback when dash.json has no analysis: neutral only, no counts, no light claims.
+        var ANALYSIS_DEFAULT = {
+          summary: [{ level: "", html: "解读待更新" }],
+          watch: [],
+          conclusions: ["解读待更新"],
+          crisis_note: "解读待更新",
+        };
+        // Live crisis counts: D.crisis.counts, else tallied from D.crisis.detail lights. Never from analysis text.
+        var LIVE = (function () {
+          var C0 = D.crisis || {}, c = C0.counts || {}, t = { "红": 0, "黄": 0, "绿": 0 }, n = 0;
+          if (c["红"] != null || c["黄"] != null || c["绿"] != null) {
+            ["红", "黄", "绿"].forEach(function (k) { t[k] = Number(c[k]) || 0; });
+          } else {
+            Object.keys(C0.detail || {}).forEach(function (id) { var l = (C0.detail[id] || {}).light; if (l in t) t[l]++; });
+          }
+          n = t["红"] + t["黄"] + t["绿"];
+          return n ? { r: t["红"], y: t["黄"], g: t["绿"], total: Math.max(n, Object.keys(C0.detail || {}).length) } : null;
+        })();
+        // Leading status emoji are dropped: the colored dot carries the level.
+        var unemoji = function (s) { return String(s == null ? "" : s).replace(/^(\s*(?:<[^>]+>\s*)*)(?:🔴|🟡|🟢|🟠|⚪|⚫)\uFE0F?\s*/u, "$1"); };
+        // Defensive pass: any 红N/黄N/绿N in rendered analysis whose total equals the live total is rewritten with live counts.
+        var CNT = /红\s*(\d+)(\s*[\/／、,，]\s*)黄\s*(\d+)(\s*[\/／、,，]\s*)绿\s*(\d+)/g;
+        var fixCounts = function (el) {
+          if (!el || !LIVE) return;
+          var w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null), node, list = [];
+          while ((node = w.nextNode())) list.push(node);
+          list.forEach(function (tn) {
+            var s = tn.nodeValue, out = s.replace(CNT, function (m, r, s1, y, s2, g) {
+              return +r + +y + +g === LIVE.total ? "红" + LIVE.r + s1 + "黄" + LIVE.y + s2 + "绿" + LIVE.g : m;
+            });
+            if (out !== s) tn.nodeValue = out;
+          });
+        };
+        var esc = function (s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; };
+        var LV = { red: ["x-r", "🔴", "红"], yellow: ["x-a", "🟡", "黄"], amber: ["x-a", "🟡", "黄"], green: ["x-g", "🟢", "绿"], blue: ["x-b", "", ""] };
+        var lv = function (l) { return LV[String(l || "").toLowerCase()] || ["x-n", "⚪", "灰"]; };
+        var A = D.analysis && typeof D.analysis === "object" ? D.analysis : null;
+        var useA = function (k) { return A && A[k] != null; };
+        var set = function (id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; return el; };
+
+        try {
+          var sum = useA("summary") ? A.summary : ANALYSIS_DEFAULT.summary;
+          fixCounts(set("x-sum-list", sum.map(function (s) {
+            var c = lv(s.level);
+            return '<li><i class="x-dot ' + c[0] + '" role="img" aria-label="' + c[2] + '"></i><span>' + unemoji(s.html) + "</span></li>";
+          }).join("")));
+        } catch (e) {}
+        try {
+          // Grey tag when the analysis was written for another snapshot; hidden otherwise.
+          var off = A && (A.stale === true || A.written_for !== D.asof_sgt);
+          var wf = A && (A.written_for || (A.basis && A.basis.asof)) || "此前";
+          document.querySelectorAll("[data-atag]").forEach(function (p) {
+            p.hidden = !off;
+            var chip = p.querySelector(".x-chip");
+            if (chip) chip.textContent = "解读基于 " + wf + " 数据，计数以危机灯为准";
+          });
+        } catch (e) {}
+        try {
+          var up = document.getElementById("x-upcoming");
+          if (up && A && A.upcoming) { up.innerHTML = "<b>未来3天</b> " + esc(A.upcoming); up.hidden = false; }
+        } catch (e) {}
+        try {
+          var en = document.getElementById("x-errnote");
+          if (en && D.errors && (Array.isArray(D.errors) ? D.errors.length : Object.keys(D.errors).length)) en.hidden = false;
+        } catch (e) {}
+        try {
+          // Stale: more than 2 weekdays (Mon–Fri) between generated_sgt's date and today, both in SGT (UTC+8).
+          var gs = String(D.generated_sgt || ""), gm = gs.match(/^(\d{4})-(\d{2})-(\d{2})/), sb = document.getElementById("x-stale");
+          if (gm && sb) {
+            var day = 864e5, g0 = Date.UTC(+gm[1], +gm[2] - 1, +gm[3]), nw = new Date(Date.now() + 8 * 36e5);
+            var t0 = Date.UTC(nw.getUTCFullYear(), nw.getUTCMonth(), nw.getUTCDate()), wd = 0;
+            for (var t = g0 + day; t <= t0 && wd < 99; t += day) { var w = new Date(t).getUTCDay(); if (w !== 0 && w !== 6) wd++; }
+            if (wd > 2) { sb.textContent = "数据已过期：最近更新 " + gs + " SGT"; sb.hidden = false; }
+          }
+        } catch (e) {}
+        try {
+          var watch = useA("watch") ? A.watch : ANALYSIS_DEFAULT.watch;
+          if (!watch.length) set("x-watch", '<div><p class="x-note">解读待更新</p></div>');
+          else fixCounts(set("x-watch", watch.map(function (w) {
+            var c = lv(w.level), dot = c[2] ? '<i class="x-dot" role="img" aria-label="' + c[2] + '"></i>' : '<i class="x-dot" aria-hidden="true"></i>';
+            var chg = w.change != null && w.change !== "" ? ' <span class="pill">' + esc(w.change) + "</span>" : "";
+            return '<div class="x-sev ' + c[0] + '"><h3>' + dot + esc(w.name) + "</h3>" +
+              (w.note ? '<p class="x-note">' + esc(w.note) + "</p>" : "") +
+              (w.value != null && w.value !== "" ? '<p class="quote">' + esc(w.value) + chg + "</p>" : "") +
+              (w.why ? "<p>" + esc(w.why) + "</p>" : "") +
+              (w.list ? "<ul>" + w.list.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") + "</div>";
+          }).join("")));
+        } catch (e) {}
+        try {
+          fixCounts(set("x-conclusions", (useA("conclusions") ? A.conclusions : ANALYSIS_DEFAULT.conclusions)
+            .map(function (s) { return "<li>" + unemoji(esc(s)) + "</li>"; }).join("")));
+        } catch (e) {}
+        try { fixCounts(set("x-crisis-note", unemoji(esc(useA("crisis_note") ? A.crisis_note : ANALYSIS_DEFAULT.crisis_note)))); } catch (e) {}
+
+        // Crisis warning
+        var C = D.crisis;
+        if (!C || typeof C !== "object") return;
+        try {
+          var root = document.getElementById("warning");
+          var LC = { "红": "x-r", "黄": "x-a", "绿": "x-g" }, ORD = { "x-r": 0, "x-a": 1, "x-g": 2, "x-n": 3 }, LBL = { "x-r": "红", "x-a": "黄", "x-g": "绿", "x-n": "灰" };
+          var layers = {};
+          root.querySelectorAll(".x-layer").forEach(function (el) { var h = el.querySelector("h3"); if (h) layers[h.textContent.trim()] = el; });
+          var cls = function (el) { return ["x-r", "x-a", "x-g", "x-n"].filter(function (c) { return el.classList.contains(c); })[0] || "x-n"; };
+          var swap = function (el, c) { el.classList.remove("x-r", "x-a", "x-g", "x-n"); el.classList.add(c); };
+          var fmt = function (v) { return typeof v === "number" ? v.toLocaleString("en-US", { maximumFractionDigits: 2 }).replace(/^-/, "\u2212") : String(v); };
+          var find = function (id) { var hit = null; root.querySelectorAll("[data-cid]").forEach(function (e) { if (e.dataset.cid === id) hit = e.closest("li"); }); return hit; };
+          var detail = C.detail || {};
+          Object.keys(detail).forEach(function (id) {
+            try {
+              var d = detail[id] || {}, li = find(id);
+              if (!li) {
+                var L = layers[d.layer]; if (!L) return;
+                li = document.createElement("li");
+                li.innerHTML = '<i class="x-dot" role="img"></i><span class="x-ind__name"></span><span class="x-ind__val"></span><span class="x-ind__rule"></span>';
+                li.querySelector(".x-ind__name").dataset.cid = id;
+                li.querySelector(".x-ind__name").textContent = d.name || id;
+                L.querySelector(".x-ind").appendChild(li);
+              }
+              var c = LC[d.light] || "x-n"; swap(li, c);
+              var dot = li.querySelector(".x-dot"); if (dot) dot.setAttribute("aria-label", LBL[c]);
+              if ("value" in d) { var v = li.querySelector(".x-ind__val"); if (v) v.textContent = d.value == null || d.value === "" ? "—" : fmt(d.value); }
+              if (d.rule != null) { var r = li.querySelector(".x-ind__rule"); if (r) r.textContent = "规则：" + d.rule; }
+              // Always visible: 临界 (green but near the amber line) and the threshold.
+              var meta = li.querySelector(".x-ind__meta") || document.createElement("span"), mh = "";
+              meta.className = "x-ind__meta";
+              if (d.light === "绿" && d.near === true) mh += '<span class="x-chip x-near">临界</span><span class="x-near-d">' + (d.dist_pct == null ? "接近阈值" : "距翻黄 " + esc(fmt(d.dist_pct)) + "%") + "</span>";
+              if (d.thr != null && d.thr !== "") mh += "<span>阈值 " + esc(fmt(d.thr)) + "</span>";
+              // Backtest tag: 未回测 (grey, reason in title and in the opened row), else the hit/false-alarm record.
+              var bt = d.bt;
+              if (bt && bt.untested) mh += '<span class="x-chip x-n x-bt-un" title="' + esc(bt.untested).replace(/"/g, "&quot;") + '">未回测</span><span class="x-bt-why">' + esc(bt.untested) + "</span>";
+              else if (bt && bt.from != null) mh += '<span class="x-bt">回测 ' + esc(bt.from) + "起 · 误报" + esc(fmt(bt.fp)) + "% · 命中" + esc(bt.hits) + "/" + esc(bt.n) + "</span>";
+              meta.innerHTML = mh;
+              var val = li.querySelector(".x-ind__val"); if (!meta.parentNode && val) val.after(meta);
+            } catch (e) {}
+          });
+          // ⓘ per light: tapping it (or anywhere on the row) shows the explanation and rule.
+          root.querySelectorAll(".x-ind li").forEach(function (li) {
+            if (li.querySelector(".x-info")) return;
+            var nm = li.querySelector(".x-ind__name"), val = li.querySelector(".x-ind__val"), b = document.createElement("button");
+            if (nm) nm.title = nm.textContent;
+            b.className = "x-info"; b.type = "button"; b.textContent = "ⓘ";
+            b.setAttribute("aria-expanded", "false"); b.setAttribute("aria-label", (nm ? nm.textContent : "") + " 说明");
+            if (val) val.after(b); else li.appendChild(b);
+          });
+          var tot = { "x-r": 0, "x-a": 0, "x-g": 0 }, all = 0;
+          Object.keys(layers).forEach(function (name) {
+            var L = layers[name], ul = L.querySelector(".x-ind"); if (!ul) return;
+            var items = Array.prototype.slice.call(ul.children).map(function (li, i) { return { li: li, c: cls(li), i: i }; });
+            items.sort(function (a, b) { return ORD[a.c] - ORD[b.c] || a.i - b.i; });
+            var k = { "x-r": 0, "x-a": 0, "x-g": 0, "x-n": 0 };
+            items.forEach(function (x) { ul.appendChild(x.li); k[x.c]++; });
+            Object.keys(tot).forEach(function (c) { tot[c] += k[c]; }); all += items.length;
+            var chip = L.querySelector(".x-layer__head .x-chip"), lc = k["x-r"] ? "x-r" : k["x-a"] ? "x-a" : k["x-g"] ? "x-g" : "x-n";
+            swap(L, lc);
+            if (chip) {
+              swap(chip, lc);
+              chip.textContent = !k["x-r"] && !k["x-a"] && !k["x-n"] ? "全绿 · " + k["x-g"]
+                : [[k["x-r"], "红"], [k["x-a"], "黄"], [k["x-g"], "绿"], [k["x-n"], "灰"]].filter(function (p) { return p[0]; }).map(function (p) { return p[0] + " " + p[1]; }).join(" · ");
+            }
+          });
+          var counts = C.counts || {};
+          root.querySelectorAll("[data-cc]").forEach(function (el) {
+            var key = el.dataset.cc, v = counts[key];
+            el.textContent = v != null ? v : tot[LC[key]];
+          });
+          root.querySelectorAll("[data-ccount]").forEach(function (el) { el.textContent = all; });
+          if (C.date) root.querySelectorAll("[data-cdate]").forEach(function (el) { el.textContent = C.date; });
+          var rs = root.querySelector("[data-reso]");
+          if (rs && C.resonance != null) {
+            var yes = C.resonance === true || C.resonance === "是" || C.resonance === "true";
+            rs.textContent = "三层共振：" + (typeof C.resonance === "string" && !yes && C.resonance !== "否" && C.resonance !== "false" ? C.resonance : yes ? "是" : "否");
+            swap(rs, yes ? "x-r" : "x-n");
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script>
+      // Composed text: title-bar summary, section headlines and chart captions, all from dash.json. Missing field → "—".
+      (function () {
+        var D = window.DASH || {}, FR = D.fred || {}, M = "\u2212", NA = "—";
+        var ok = function (v) { return v != null && v !== "" && !isNaN(v); };
+        var n = function (v, dp) { return Number(v).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp }); };
+        var sg = function (v, dp) { var r = Math.abs(v).toFixed(dp); return (Number(r) === 0 ? "" : v > 0 ? "+" : M) + n(r, dp); };
+        var ymd = function (v) { var p = String(v).split(/[-/]/); return p.length === 3 && p[0].length < 4 ? [p[2], p[0], p[1]] : p; };
+        // Date by frequency: daily/weekly M/D, monthly "M月" (long: "YYYY年M月"), quarterly YYYYQn.
+        var dt = function (v, freq, long) {
+          if (!v) return NA; var p = ymd(v);
+          if (freq === "m") return (long ? p[0] + "年" : "") + +p[1] + "月";
+          if (freq === "q") return p[0] + "Q" + (Math.floor((+p[1] - 1) / 3) + 1);
+          return +p[1] + "/" + p[2];
+        };
+        var E = function (id) { return FR[id] || {}; };
+        var V = function (id, key, fmt) { var v = E(id)[key]; return ok(v) ? fmt(Number(v)) : NA; };
+        var DT = function (id, key, long) { var e = E(id); return dt(e[key || "date"], e.freq, long); };
+        var P2 = function (v) { return n(v, 2) + "%"; }, P1 = function (v) { return n(v, 1) + "%"; };
+        var BP = function (v) { return sg(v, 0) + "bp"; }, PC = function (v) { return sg(v, 2) + "%"; }, PT = function (v) { return sg(v / 100, 1) + "pt"; };
+        var N0 = function (v) { return n(v, 0); }, N2 = function (v) { return n(v, 2); }, USD = function (v) { return "$" + n(v, 2); };
+        var K = function (v) { return n(v / 1000, 0) + "k"; }, SK = function (v) { return sg(v, 0) + "k"; };
+        var put = function (key, txt) { document.querySelectorAll('[data-h="' + key + '"]').forEach(function (el) { el.textContent = txt; }); };
+
+        // Title-bar summary: live crisis counts + the first analysis line as plain text + snapshot date.
+        try {
+          var c = (D.crisis || {}).counts || {}, cn = function (k) { return ok(c[k]) ? c[k] : NA; };
+          var s0 = ((D.analysis || {}).summary || [])[0], txt = NA;
+          if (s0 && s0.html) {
+            var tmp = document.createElement("div"); tmp.innerHTML = String(s0.html);
+            txt = (tmp.textContent || "")
+              .replace(/[\u{1F534}\u{1F7E1}\u{1F7E2}\u{1F7E0}\u26AA\u26AB]\uFE0F?/gu, "")
+              .replace(/红\s*\d+\s*[\/／、,，]\s*黄\s*\d+\s*[\/／、,，]\s*绿\s*\d+/g, "")
+              .replace(/[（(]共\s*\d+\s*盏[）)]/g, "")
+              .replace(/^\s*危机预警\s*/, "")
+              .replace(/^[\s，,；;、:：]+/, "").replace(/\s+/g, " ").trim();
+            var chars = Array.from(txt);
+            if (!chars.length) txt = NA; else if (chars.length > 60) txt = chars.slice(0, 60).join("").replace(/[，,；;、\s]+$/, "") + "…";
+          }
+          var ts = document.getElementById("x-tsum");
+          if (ts) ts.textContent = "危机灯 红" + cn("红") + "/黄" + cn("黄") + "/绿" + cn("绿") + " · " + txt + " · 截至 " + (D.asof_sgt || NA);
+        } catch (e) {}
+
+        // Section headlines.
+        try {
+          put("mkt", "标普 " + V("SP500", "value", N0) + "（" + DT("SP500") + "，" + V("SP500", "chg_pct", PC) + "）· 10Y " + V("DGS10", "value", P2) + "（" + V("DGS10", "chg_bp", BP) + "）· VIX " + V("VIXCLS", "value", N2) + " · WTI " + V("DCOILWTICO", "value", USD));
+          put("mkt-sub", "涨跌：标普较 " + DT("SP500", "prev_date") + "，10Y 较 " + DT("DGS10", "prev_date") + " · 日期：10Y " + DT("DGS10") + " · VIX " + DT("VIXCLS") + " · WTI " + DT("DCOILWTICO") + " · 布伦特 " + V("DCOILBRENTEU", "value", USD) + "（" + DT("DCOILBRENTEU") + "）· 美元广义指数 " + V("DTWEXBGS", "value", N2) + "（" + DT("DTWEXBGS") + "）");
+          put("rates", "10Y " + V("DGS10", "value", P2) + " · 2Y " + V("DGS2", "value", P2) + "（" + DT("DGS2") + "）· 30年房贷 " + V("MORTGAGE30US", "value", P2) + "（" + DT("MORTGAGE30US") + "，较 " + DT("MORTGAGE30US", "prev_date") + " " + V("MORTGAGE30US", "chg_bp", BP) + "）");
+          put("rates-sub", "10Y–2Y 利差 " + V("T10Y2Y", "value", P2) + "（" + DT("T10Y2Y") + "，较 " + DT("T10Y2Y", "prev_date") + " " + V("T10Y2Y", "chg_bp", BP) + "）");
+          put("econ", "CPI 同比 " + V("CPIAUCSL", "yoy_pct", P2) + "（" + DT("CPIAUCSL") + "）· 非农 " + V("PAYEMS", "mom_k", SK) + "（" + DT("PAYEMS") + "）· 初请 " + V("ICSA", "value", K) + "（" + DT("ICSA") + "）· GDP " + V("A191RL1Q225SBEA", "value", P1) + "（" + DT("A191RL1Q225SBEA") + "）");
+          put("econ-sub", "失业率 " + V("UNRATE", "value", P1) + "（" + DT("UNRATE", "date", true) + "）· 非农3月均 " + V("PAYEMS", "avg3_k", SK) + " · 零售同比 " + V("RSAFS", "yoy_pct", PC) + "（" + DT("RSAFS", "date", true) + "）");
+          put("credit", "HY OAS " + V("BAMLH0A0HYM2", "value", P2) + "（" + DT("BAMLH0A0HYM2") + "，较 " + DT("BAMLH0A0HYM2", "prev_date") + " " + V("BAMLH0A0HYM2", "chg_bp", BP) + "）· 逆回购 $" + V("RRPONTSYD", "value", function (v) { return n(v, 2) + "B"; }) + "（" + DT("RRPONTSYD") + "）");
+          put("credit-sub", "投资级利差 " + V("BAMLC0A0CM", "value", P2) + "（" + DT("BAMLC0A0CM") + "）· CCC 级利差 " + V("BAMLH0A3HYC", "value", P2) + "（" + DT("BAMLH0A3HYC") + "）");
+        } catch (e) {}
+
+        // Chart captions and canvas labels, from each series' value, change and spark.
+        var CAP = {
+          "c-spx": { id: "SP500", name: "标普500", f: N2, rf: N0, chg: ["chg_pct", PC], per: "每日收盘" },
+          "c-vix": { id: "VIXCLS", name: "VIX", f: N2, rf: N2, chg: ["chg_pct", PC], per: "每日" },
+          "c-usd": { id: "DTWEXBGS", name: "美元广义指数", f: N2, rf: N2, chg: ["chg_pct", PC], per: "DTWEXBGS 每日" },
+          "c-wti": { id: "DCOILWTICO", name: "WTI 原油", f: USD, rf: USD, chg: ["chg_pct", PC], per: "美元/桶" },
+          "c-mtg": { id: "MORTGAGE30US", name: "30年期房贷", f: P2, rf: P2, chg: ["chg_bp", BP], per: "每周" },
+          "c-unemp": { id: "UNRATE", name: "失业率", f: P1, rf: P1, chg: ["chg_bp", PT], per: "每月" },
+          "c-claims": { id: "ICSA", name: "初请失业金", f: K, rf: K, chg: ["chg_pct", PC], per: "每周" },
+          "c-gdp": { id: "A191RL1Q225SBEA", name: "实际 GDP", f: P1, rf: P1, chg: ["chg_bp", PT], per: "环比年化" },
+        };
+        var capEl = function (cid) { var cv = document.getElementById(cid), fig = cv && cv.closest("figure"); return { cv: cv, cap: fig && fig.querySelector(".chart__cap") }; };
+        var setCap = function (cid, title, small, aria) {
+          var x = capEl(cid); if (!x.cap) return;
+          x.cap.textContent = title; var sm = document.createElement("small"); sm.textContent = small; x.cap.appendChild(sm);
+          if (aria && x.cv) x.cv.setAttribute("aria-label", aria);
+        };
+        var span = function (e) {
+          var s = (e.spark || []).filter(ok).map(Number), d = e.spark_dates || [];
+          return { lo: s.length ? Math.min.apply(null, s) : null, hi: s.length ? Math.max.apply(null, s) : null,
+            a: d.length ? dt(d[0], e.freq, e.freq === "m") : NA, b: d.length ? dt(d[d.length - 1], e.freq, e.freq === "m") : NA };
+        };
+        Object.keys(CAP).forEach(function (cid) {
+          try {
+            var c = CAP[cid], e = E(c.id), r = span(e), val = V(c.id, "value", c.f);
+            var rng = r.lo == null ? NA : c.rf(r.lo) + "–" + c.rf(r.hi);
+            setCap(cid, c.name + " · " + val,
+              "较 " + DT(c.id, "prev_date", e.freq === "m") + " " + V(c.id, c.chg[0], c.chg[1]) + " · 区间 " + rng + " · " + c.per + " " + r.a + "–" + r.b,
+              c.name + " " + r.a + "–" + r.b + " 区间 " + rng + "，" + DT(c.id, "date", e.freq === "m") + " 为 " + val);
+          } catch (err) {}
+        });
+        try {
+          var a = E("DGS10"), r10 = span(a);
+          setCap("c-ust", "10年期 " + V("DGS10", "value", P2) + " · 2年期 " + V("DGS2", "value", P2),
+            "较 " + DT("DGS10", "prev_date") + " " + V("DGS10", "chg_bp", BP) + " / " + V("DGS2", "chg_bp", BP) + " · 每日收益率 " + r10.a + "–" + r10.b,
+            "10年期 " + DT("DGS10") + " 为 " + V("DGS10", "value", P2) + "，较 " + DT("DGS10", "prev_date") + " " + V("DGS10", "chg_bp", BP) + "；2年期 " + DT("DGS2") + " 为 " + V("DGS2", "value", P2));
+        } catch (err) {}
+
+        // Crisis lights with no entry in dash.json show "—", never the value typed into the markup.
+        try {
+          var det = (D.crisis || {}).detail || {};
+          document.querySelectorAll("#warning [data-cid]").forEach(function (el) {
+            if (det[el.dataset.cid]) return;
+            var li = el.closest("li"), v = li && li.querySelector(".x-ind__val"); if (v) v.textContent = NA;
+          });
+        } catch (e) {}
+      })();
+    </script>
+    <script src="hark.js"></script>
+    <!-- Chart libraries load deferred and in order (chart.js → datalabels → hark-charts), so Chart exists before hark-charts.js runs, folded inline or not. -->
+    <script src="chart.js" defer></script>
+    <script src="datalabels.js" defer></script>
+    <script src="hark-charts.js" defer></script>
+    <script>
+      // ⓘ notes: open on tap or click, Esc closes. A crisis light row toggles on a tap anywhere in the row.
+      const setOpen = (btn, open) => {
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        const row = btn.closest(".x-ind li"); if (row) row.classList.toggle("is-open", open);
+      };
+      document.addEventListener("click", (e) => {
+        if (e.target.closest("a")) return;
+        const li = e.target.closest("#warning .x-ind li");
+        const b = e.target.closest(".x-info") || (li && li.querySelector(".x-info"));
+        if (b) setOpen(b, b.getAttribute("aria-expanded") !== "true");
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") document.querySelectorAll('.x-info[aria-expanded="true"]').forEach((b) => setOpen(b, false));
+      });
+      // A nav link to a folded section opens its fold, so every part is one tap away.
+      const openFor = (hash) => {
+        try {
+          const t = hash && hash.length > 1 && document.getElementById(decodeURIComponent(hash.slice(1)));
+          if (t) t.querySelectorAll("details.x-sec").forEach((d) => { d.open = true; });
+        } catch (err) {}
+      };
+      document.addEventListener("click", (e) => { const a = e.target.closest('a[href^="#"]'); if (a) openFor(a.getAttribute("href")); });
+      window.addEventListener("hashchange", () => openFor(location.hash));
+      openFor(location.hash);
+
+      // Folds: the whole summary row toggles natively (Enter/Space included); aria-expanded mirrors the state.
+      // A section head whose only content is one fold toggles that fold too.
+      document.querySelectorAll("details.x-fold").forEach((d) => {
+        const s = d.querySelector(":scope > summary"); if (!s) return;
+        const sync = () => s.setAttribute("aria-expanded", d.open ? "true" : "false");
+        sync(); d.addEventListener("toggle", sync);
+      });
+      document.querySelectorAll(".section").forEach((sec) => {
+        const head = sec.querySelector(":scope > .head"), folds = sec.querySelectorAll(":scope > details.x-sec");
+        if (!head || folds.length !== 1) return;
+        head.classList.add("x-foldhead");
+        head.addEventListener("click", (e) => {
+          if (e.target.closest("a, button, input, select, textarea")) return;
+          if (window.getSelection && String(window.getSelection())) return;
+          folds[0].open = !folds[0].open;
+        });
+      });
+
+      // Charts wait for the deferred Chart.js (CDN), and each one is drawn only when it scrolls into view inside an open fold.
+      function chartsInit() {
+      if (!window.Chart) return;
+      if (!(window.Hark && Hark.labels)) {
+        // hark-charts.js ran before Chart.js arrived (inlined without defer): run its source again now that Chart exists.
+        const needle = "hark-charts.js needs " + "chart.js";
+        const src = Array.prototype.find.call(document.scripts, (s) => !s.src && s.textContent.indexOf(needle) > -1);
+        if (src) try { new Function(src.textContent)(); } catch (err) {}
+        if (!(window.Hark && Hark.labels)) return;
+      }
+      const S = window.dashSeries ? window.dashSeries(Hark.data("d-series")) : Hark.data("d-series");
+      const last = (ctx) => ctx.dataIndex === ctx.dataset.data.length - 1;
+      const isEnd = (i, t) => i === 0 || i === t.length - 1;
+      // Sparkline axes: only the first/last date and the axis min/max are labeled, so a non-zero baseline is explicit.
+      function sparkAxes(labels, fmt, yExtra) {
+        return {
+          x: { ticks: { autoSkip: false, callback: (v, i, t) => (isEnd(i, t) ? labels[v] : "") } },
+          y: { beginAtZero: false, ...(yExtra || {}), ticks: { callback: (v, i, t) => (isEnd(i, t) ? fmt(v) : "") } },
+        };
+      }
+      // Semantic series colors: red = moving in a worrying direction, green = benign.
+      const RED = "var(--x-red)", GREEN = "var(--x-green)", SLATE = "var(--x-slate)", AMBER = "var(--x-amber)";
+      const INK = { [RED]: "var(--x-red-ink)", [GREEN]: "var(--x-green-ink)", [SLATE]: "var(--x-slate-ink)", [AMBER]: "var(--x-amber-ink)" };
+      const lastDot = (vals) => vals.map((_, i) => (i === vals.length - 1 ? 4 : 0));
+      function line(id, d, fmt, tipFmt, color) {
+        const tip = tipFmt || fmt;
+        const lo = Math.min(...d.values), hi = Math.max(...d.values);
+        new Chart(document.getElementById(id), {
+          type: "line",
+          data: {
+            labels: d.labels,
+            datasets: [{
+              label: id, data: d.values, borderColor: color, pointBackgroundColor: color, pointBorderColor: color,
+              borderWidth: 2, pointRadius: lastDot(d.values), fill: "start", backgroundColor: Hark.wash(color, 0.18),
+            }],
+          },
+          options: {
+            // Room on the right so the end-point value is never clipped; the label also clamps inside the chart.
+            layout: { padding: { right: 40 } },
+            scales: sparkAxes(d.labels, fmt, { suggestedMin: lo - (hi - lo) * 0.05 }),
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (ctx) => tip(ctx.raw) } },
+              datalabels: { ...Hark.labels.points, display: last, clamp: true, clip: false, formatter: (v) => tip(v), color: () => Hark.color(INK[color]) },
+            },
+          },
+        });
+      }
+      const num = (dp) => (v) => Number(v).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+      const pct = (v) => `${v}%`;
+      const pct2 = (v) => `${Number(v).toFixed(2)}%`;
+      const usd = (v) => `$${Number(v).toFixed(2)}`;
+      const B = {
+        "c-spx": () => line("c-spx", S.spx, num(0), num(2), GREEN),
+        "c-vix": () => line("c-vix", S.vix, num(0), num(2), RED),
+        "c-usd": () => line("c-usd", S.usd, num(1), num(2), GREEN),
+        "c-wti": () => line("c-wti", S.wti, (v) => `$${v}`, usd, RED),
+        "c-mtg": () => line("c-mtg", S.mtg, pct, pct2, RED),
+        "c-unemp": () => line("c-unemp", S.unemp, (v) => `${Number(v).toFixed(1)}%`, pct, RED),
+        "c-claims": () => line("c-claims", S.claims, (v) => `${v}k`, null, GREEN),
+        "c-ust": () => ust(),
+        "c-gdp": () => gdp(),
+      };
+      const run = (id) => { const f = B[id]; if (!f) return; delete B[id]; try { f(); } catch (err) {} };
+      if ("IntersectionObserver" in window) {
+        const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { io.unobserve(en.target); run(en.target.id); } }), { rootMargin: "200px 0px" });
+        Object.keys(B).forEach((id) => { const c = document.getElementById(id); if (c) io.observe(c); });
+      } else Object.keys(B).forEach(run);
+
+      function ust() {
+      new Chart(document.getElementById("c-ust"), {
+        type: "line",
+        data: {
+          labels: S.ust.labels,
+          datasets: [
+            { label: "10年期", data: S.ust.y10, borderColor: GREEN, pointBackgroundColor: GREEN, pointBorderColor: GREEN, borderWidth: 2, pointRadius: lastDot(S.ust.y10) },
+            { label: "2年期", data: S.ust.y2, borderColor: SLATE, pointBackgroundColor: SLATE, pointBorderColor: SLATE, pointRadius: lastDot(S.ust.y2) },
+          ],
+        },
+        options: {
+          scales: sparkAxes(S.ust.labels, pct2),
+          plugins: {
+            legend: { display: false },
+            datalabels: Hark.labels.ends,
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label} ${ctx.raw}%` } },
+          },
+        },
+      });
+      }
+
+      function gdp() {
+      new Chart(document.getElementById("c-gdp"), {
+        type: "bar",
+        data: {
+          labels: S.gdp.labels,
+          datasets: [{ data: S.gdp.values, backgroundColor: S.gdp.labels.map((l, i) => (i === S.gdp.labels.length - 1 ? AMBER : "var(--chart-muted)")) }],
+        },
+        options: {
+          scales: sparkAxes(S.gdp.labels, pct, { beginAtZero: true }),
+          plugins: {
+            legend: { display: false },
+            datalabels: { ...Hark.labels.values, formatter: pct },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.raw}%` } },
+          },
+        },
+      });
+      }
+      }
+      // Init only once Chart and Hark.labels exist; retry on window load if the libraries were still arriving.
+      let chartsDone = false;
+      const chartsTry = () => { if (chartsDone || !window.Chart) return; chartsInit(); chartsDone = !!(window.Hark && Hark.labels); };
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", chartsTry); else chartsTry();
+      window.addEventListener("load", chartsTry);
+    </script>
+  </body>
+</html>
