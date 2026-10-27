@@ -18,7 +18,7 @@
   --chart-6: light-dark(#7e9c9b, #96b3b2);
   --chart-7: light-dark(#c9a3a8, #d6b5b9);
   --chart-on-colour: #1d1d1f;                           /* text drawn on the seven colours, pale in both themes */
-  --chart-mono: "GT Standard Mono", "Geist Mono", ui-monospace, monospace; /* every number on a chart */
+  --chart-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; /* every number on a chart */
 }
 
 /* @component chart (Chart.js) */
